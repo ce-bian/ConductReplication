@@ -1,13 +1,13 @@
-# both DGP and simulation, based on modified structs and DGP functions
-# 2024.7.27: parameter 3 still doesn't work; need to weaken the IV
+# original files: new_DGP_output_C2N1 and new_DGP_output_generalized. 
+
 using Parameters, Optim, ForwardDiff, LinearAlgebra, Distributions, Random
 using PrettyTables, DataFrames, NLsolve, NLSolversBase, RCall, ThreadsX, Revise, DataFramesMeta
 using CSV, JLD2,  LaTeXStrings, Glob
-includet("../CES_DGP_separate_draw_structs_modified.jl")
-includet("../CES_DGP_separate_draw_modified_functions_2.jl")
+includet("../../CES_structs.jl")
+includet("../CES_DGP_functions.jl")
 includet("../CES_est_functions.jl")
 includet("../CES_MC_functions.jl")
-includet("../CES_MC_DGP_simDT_output_separate_draw_functions.jl")
+includet("../CES_MC_DGP_simDT_output_functions.jl")
 
 # input main parameters
 includet("../../main_parameters.jl")
@@ -23,10 +23,10 @@ B = 250
 
 C_N_list = [(2,1), (3,1)]
 
-
+# estimate the parameters for each combination of C and N with M = 1000
 for combo in C_N_list
-    C = combo[1]
-    N = combo[2]
+    local C = combo[1]
+    local N = combo[2]
     GP = global_param(C=C, N=N, M=M, μ_Y=μ_Y, V_Y=V_Y, μ_ξ=μ_ξ, V_ξ=V_ξ, μ_ξ0=μ_ξ0, V_ξ0=V_ξ0, μ_ω=μ_ω, V_ω=V_ω,μ_ω0=μ_ω0, V_ω0=V_ω0, ρ=ρ, off1=off1, off2=off2, off10=off10, off20=off20, μ_psi=μ_psi, V_psi=V_psi, β=β, σ=σ_true, w=w, MAXIT=MAXIT, TOL=TOL, MAX_RETRIES=MAX_RETRIES)
 
     dfB, dfC = bootstrap_MC_safe(GP, B, T, seed) 
@@ -34,9 +34,10 @@ for combo in C_N_list
     save(filename, "dfB",dfB, "dfC",dfC, "GP", GP)
 end    
 
+# output simulated data
 for combo in C_N_list
-    C = combo[1]
-    N = combo[2]
+    local C = combo[1]
+    local N = combo[2]
     GP = global_param(C=C, N=N, M=M, μ_Y=μ_Y, V_Y=V_Y, μ_ξ=μ_ξ, V_ξ=V_ξ, μ_ξ0=μ_ξ0, V_ξ0=V_ξ0, μ_ω=μ_ω, V_ω=V_ω,μ_ω0=μ_ω0, V_ω0=V_ω0, ρ=ρ, off1=off1, off2=off2, off10=off10, off20=off20, μ_psi=μ_psi, V_psi=V_psi, β=β, σ=σ_true, w=w, MAXIT=MAXIT, TOL=TOL, MAX_RETRIES=MAX_RETRIES)
 
     inputFile = "Data/dfB_dfC_GP_C$(C)_N$(N)_M$(M).jld2"

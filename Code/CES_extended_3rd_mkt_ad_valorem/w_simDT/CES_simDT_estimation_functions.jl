@@ -1,3 +1,4 @@
+# renamed file
 # given data, estimate the parameters. Different from MC_functions where the first step is to simulate data
 
 Σ(x)= sum(x)
@@ -142,11 +143,11 @@ function store_est(R::String, eq_input::eqbm_t, GP::global_param, full::Bool)
 end
 
 
-function simDT_bootstrap_single_iteration(t::Int64, iteration::Int64, GP::global_param, DT::DataFrame, size::Int64, global_seed::Int64)
+function simDT_bootstrap_single_iteration(t::Int64, iteration::Int64, GP::global_param, DT::DataFrame, size::Int64, global_seed::Int64, iteration_seed::Int64)
     """
     Return estimates for a single iteration in the bootstrap, for demand and supply GMM only
     """
-    unique_seed = global_seed + 1000*t + iteration # Create a unique seed for this task
+    unique_seed = global_seed + 1000*t + iteration + iteration_seed # Create a unique seed for this task
     task_rng = MersenneTwister(unique_seed)  
 
     selected_market = sample(task_rng, 1:GP.M+GP.C, size, replace=true) # with replacement
@@ -166,7 +167,7 @@ end
 
 
 # var(itr; corrected::Bool=true, mean=nothing[, dims]) If corrected is true, then the sum is scaled with n-1, whereas the sum is scaled with n if corrected is false where n is the number of elements in itr.
-function simDT_bootstrap_t(R::String, global_seed::Int64, GP::global_param, eq_input::eqbm_t, B::Int64, t::Int64, full::Bool; outputDT::Bool = false, folder_path::String = "")
+function simDT_bootstrap_t(R::String, global_seed::Int64, GP::global_param, eq_input::eqbm_t, B::Int64, t::Int64, full::Bool, B_seed ::Int64; outputDT::Bool = false, folder_path::String = "")
     """
     Return hausman test for a single t, including DGP
     """
@@ -194,8 +195,21 @@ function simDT_bootstrap_t(R::String, global_seed::Int64, GP::global_param, eq_i
     # bootstrap with replacement
     # without parallelization
     result = []
-    for iteration in 1:B
-       push!(result, simDT_bootstrap_single_iteration(t, iteration, GP, DT, market_size, global_seed))
+    for iteration in (1+B_seed):(B+B_seed)
+        retry = 0 
+        while true
+           try 
+               push!(result, simDT_bootstrap_single_iteration(t, iteration, GP, DT, market_size, global_seed, retry*1000))
+               break
+           catch e
+                retry += 1
+                if retry > 100
+                    println("Too many retries for a single iteration")
+                    error("Too many retries for a single iteration")
+                end
+            end
+        end
+    #    push!(result, simDT_bootstrap_single_iteration(t, iteration, GP, DT, market_size, global_seed))
     end
     df_boot = vcat(result...)
     var_DSB = var(df_boot[!, :ΔDSB])
@@ -206,35 +220,84 @@ function simDT_bootstrap_t(R::String, global_seed::Int64, GP::global_param, eq_i
     σSB_GMM = σSB_GMM[1], σSC_GMM = σSC_GMM[1], σDSB_GMM = σDSB_GMM[1], σDSC_GMM = σDSC_GMM[1],
     seSB_GMM = seSB_GMM[1],seSC_GMM = seSC_GMM[1], seDSB_GMM=seDSB_GMM[1], seDSC_GMM=seDSC_GMM[1],
     herfindahl = herfindahl, mean_RS0 = mean_RS0)
-
-    # # add: throw an error if var_DSB or var_DSC is too large
+    
+    # add: throw an error if var_DSB or var_DSC is too large
     # @assert var_DSB < 1e3 && var_DSC < 1e3
+    println("period $t done.")
     return df
 end
 
 
 
-function simDT_bootstrap_MC(R::String, GP::global_param, eq_input::eqbm_output, B::Int64; full = false)
+# var(itr; corrected::Bool=true, mean=nothing[, dims]) If corrected is true, then the sum is scaled with n-1, whereas the sum is scaled with n if corrected is false where n is the number of elements in itr.
+function simDT_t(R::String, global_seed::Int64, GP::global_param, eq_input::eqbm_t, B::Int64, t::Int64, full::Bool; outputDT::Bool = false, folder_path::String = "")
     """
-    Monte-Carlo simulation, returns Hausman stats etc. Given simulated data
-        - GP: global parameters
-        - eq_input: eqbm_output object, simulated data for all t/tasks
-        - B: number of bootstrap iterations
-        - full: whether full versions of the estimates are needed
-    Output:
-        - dfB: a dataframe of statistics for DGP based on Bertrand
-        - dfC: a dataframe of statistics for DGP based on Cournot
-    """ 
-    eqbm_t_list = eq_input.eqbm_t_list
-    T = length(eqbm_t_list)
-   
-    seed = eq_input.seed
-    # need modification, add outputDT, folder_path
-    result = ThreadsX.map(t->simDT_bootstrap_t(R, seed, GP, eqbm_t_list[t], B, t, full),1:T)
-    df = reduce(vcat,result,cols=:union)
+    estimation for a single t, including DGP
+    """
+
+    RS0 = [eq_input.eqbm_m_list[m].RS0_m for m in 1:GP.C+GP.M]
+    mean_RS0 = mean(RS0)
+    herfindahl_list = [eq_input.eqbm_m_list[m].herfindahl for m in 1:GP.C+GP.M]
+    herfindahl = sum(herfindahl_list)
+
+    DT = simDT_for_reg(eq_input, full) # one period data
+    if outputDT
+        filename = folder_path*"temp_Conduct$(R)_C$(GP.C)_N$(GP.N)_M$(GP.M)_t$(t).csv"
+        CSV.write(filename, DT)
+    end
+
+    σD_OLS = est_demand_OLS(DT)
+    σD_IV = est_demand_IV(DT)
+    σS_OLS = est_supply_OLS(DT)
+    σSB_GMM, seSB_GMM = est_supply_GMM_twostep(GP,μB_icm_R,μB_0mm_R,DT)
+    σSC_GMM, seSC_GMM = est_supply_GMM_twostep(GP,μC_icm_R,μC_0mm_R,DT)
+    σDSB_GMM, seDSB_GMM = est_supply_demand_GMM_twostep(GP,μB_icm_R,μB_0mm_R,DT)
+    σDSC_GMM, seDSC_GMM = est_supply_demand_GMM_twostep(GP,μC_icm_R,μC_0mm_R,DT)
+
+    
+    df = DataFrame(R=R, t=t, ΔDSB = σDSB_GMM[1] - σD_IV, ΔDSC = σDSC_GMM[1] - σD_IV,
+    σD_OLS = σD_OLS, σD_IV = σD_IV, σS_OLS = σS_OLS, 
+    σSB_GMM = σSB_GMM[1], σSC_GMM = σSC_GMM[1], σDSB_GMM = σDSB_GMM[1], σDSC_GMM = σDSC_GMM[1],
+    seSB_GMM = seSB_GMM[1],seSC_GMM = seSC_GMM[1], seDSB_GMM=seDSB_GMM[1], seDSC_GMM=seDSC_GMM[1],
+    herfindahl = herfindahl, mean_RS0 = mean_RS0)
+
     return df
 end
 
+
+# function simDT_t_modified(R::String, global_seed::Int64, GP::global_param, eq_input::eqbm_t, B::Int64, t::Int64, full::Bool; outputDT::Bool = false, folder_path::String = "")
+#     """
+#     estimation for a single t, including DGP
+#     """
+
+#     RS0 = [eq_input.eqbm_m_list[m].RS0_m for m in 1:GP.C+GP.M]
+#     mean_RS0 = mean(RS0)
+#     herfindahl_list = [eq_input.eqbm_m_list[m].herfindahl for m in 1:GP.C+GP.M]
+#     herfindahl = sum(herfindahl_list)
+
+#     DT = simDT_for_reg(eq_input, full) # one period data
+#     if outputDT
+#         filename = folder_path*"temp_Conduct$(R)_C$(GP.C)_N$(GP.N)_M$(GP.M)_t$(t).csv"
+#         CSV.write(filename, DT)
+#     end
+
+#     σD_OLS = est_demand_OLS(DT)
+#     σD_IV = est_demand_IV(DT)
+#     σS_OLS = est_supply_OLS(DT)
+#     σSB_GMM, seSB_GMM = est_supply_GMM_twostep(GP,μB_icm_R,μB_0mm_R,DT)
+#     σSC_GMM, seSC_GMM = est_supply_GMM_twostep(GP,μC_icm_R,μC_0mm_R,DT)
+#     σDSB_GMM, seDSB_GMM = est_supply_demand_GMM_twostep_modified(GP,μB_icm_R,μB_0mm_R,DT)
+#     σDSC_GMM, seDSC_GMM = est_supply_demand_GMM_twostep_modified(GP,μC_icm_R,μC_0mm_R,DT)
+
+    
+#     df = DataFrame(R=R, t=t, ΔDSB = σDSB_GMM[1] - σD_IV, ΔDSC = σDSC_GMM[1] - σD_IV,
+#     σD_OLS = σD_OLS, σD_IV = σD_IV, σS_OLS = σS_OLS, 
+#     σSB_GMM = σSB_GMM[1], σSC_GMM = σSC_GMM[1], σDSB_GMM = σDSB_GMM[1], σDSC_GMM = σDSC_GMM[1],
+#     seSB_GMM = seSB_GMM[1],seSC_GMM = seSC_GMM[1], seDSB_GMM=seDSB_GMM[1], seDSC_GMM=seDSC_GMM[1],
+#     herfindahl = herfindahl, mean_RS0 = mean_RS0)
+
+#     return df
+# end
 
 
 
@@ -251,23 +314,80 @@ function simDT_bootstrap_MC_safe(R::String, GP::global_param, eq_input::eqbm_out
         - dfC: a dataframe of statistics for DGP based on Cournot
     """ 
 
-    function try_bootstrap(t, R)
+    function try_bootstrap(t,R,B_seed)
         try
-            return (idx=t, success=true, result = simDT_bootstrap_t(R, seed, GP, eqbm_t_list[t], B, t, full))
+            return (idx=t, success=true, result = simDT_bootstrap_t(R, seed, GP, eqbm_t_list[t], B, t, full, B_seed))
         catch e
+            println("Error in task $t: $e", " - retry later")
             return (idx=t, success=false, result=nothing)
         end
     end  
     eqbm_t_list = eq_input.eqbm_t_list
     T = length(eqbm_t_list)
 
-    results = ThreadsX.map(t -> try_bootstrap(t, R), 1:T)
+    results = ThreadsX.map(t -> try_bootstrap(t, R, 0), 1:T)
     # Filter successful and unsuccessful results
     successes = filter(r -> r.success, results)
     df = reduce(vcat, [r.result for r in successes], cols=:union)
 
-    # Add: remove rows with large variances
-    df = filter(row -> row.var_DSB < 1e3 && row.var_DSC < 1e3, df)
+    # # Add: remove rows with large variances
+    # df = filter(row -> row.var_DSB < 1e3 && row.var_DSC < 1e3, df)
+
+    # count number of successful tasks
+    n_success = size(df, 1)
+    times = 1
+    while(n_success < T && times <=50)
+        println("Retry for $T - $n_success unsuccessful tasks")
+        # retry for unsuccessful tasks
+        unsuccessful = filter(r -> !r.success, results)
+        # update 
+        results = ThreadsX.map(r -> try_bootstrap(r.idx, R, times*1000*B), unsuccessful)
+        successes = filter(r -> r.success, results)
+        if size(successes, 1) > 0
+            df_temp = reduce(vcat, [r.result for r in successes], cols=:union)
+            df = vcat(df, df_temp)
+            n_success = size(df, 1)    
+        end
+        times += 1
+    end
 
     return df # only return successful results
 end
+
+
+
+# function simDT_MC_safe(R::String, GP::global_param, eq_input::eqbm_output, B::Int64; full = false)
+#     """
+#     Monte-Carlo simulation, safe version. Deal with unexpected errors like "ArgumentError: matrix contains Infs or NaNs"
+#         - GP: global parameters
+#         - global_seed: two random seeds
+#         - T: number of simulations
+#         - B: number of bootstrap iterations
+#         - full: whether full versions of the estimates are needed
+#     Output:
+#         - dfB: a dataframe of statistics for DGP based on Bertrand
+#         - dfC: a dataframe of statistics for DGP based on Cournot
+#     """ 
+
+#     function try_est(t, R)
+#         try
+#             return (idx=t, success=true, result = simDT_t(R, seed, GP, eqbm_t_list[t], B, t, full))
+#         catch e
+#             println("Error in estimation task $t: $e")
+#             return (idx=t, success=false, result=nothing)
+#         end
+#     end  
+#     eqbm_t_list = eq_input.eqbm_t_list
+#     T = length(eqbm_t_list)
+
+#     results = ThreadsX.map(t -> try_est(t, R), 1:T)
+#     # Filter successful and unsuccessful results
+#     successes = filter(r -> r.success, results)
+#     df = reduce(vcat, [r.result for r in successes], cols=:union)
+
+#     # # Add: remove rows with large variances
+#     # df = filter(row -> row.var_DSB < 1e3 && row.var_DSC < 1e3, df)
+
+#     return df # only return successful results
+# end
+

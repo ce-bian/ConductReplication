@@ -2,7 +2,7 @@ using Parameters, Optim, ForwardDiff, LinearAlgebra, Distributions, Random
 using PrettyTables, DataFrames, NLsolve, NLSolversBase, RCall, ThreadsX, Revise
 using CSV, JLD2, Test, Plots, StatsPlots, LaTeXStrings
 
-includet("../CES_extended_3rd_mkt_structs.jl")
+includet("../../CES_structs.jl")
 includet("../CES_solve_eqba_m_functions.jl")
 includet("../CES_eqba_properties_m_functions.jl")
 includet("../CES_welfare_m_functions.jl")

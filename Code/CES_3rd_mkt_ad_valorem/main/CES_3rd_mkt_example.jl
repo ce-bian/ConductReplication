@@ -1,9 +1,9 @@
 using Parameters, Optim, ForwardDiff, LinearAlgebra, Distributions, Random
 using PrettyTables, DataFrames, NLsolve, NLSolversBase, RCall, ThreadsX, Revise
 using CSV, JLD2, Test, Plots, StatsPlots, LaTeXStrings
-includet("../CES_3rd_mkt_structs.jl")
-includet("../CES_solve_eqba_functions.jl")
-includet("../CES_eqba_properties_functions.jl")
+includet("../../CES_structs.jl")
+includet("../CES_3rd_mkt_solve_eqba_functions.jl")
+includet("../CES_3rd_mkt_eqba_properties_functions.jl")
 includet("../CES_3rd_mkt_optimal_s_functions.jl")
 includet("../CES_3rd_mkt_s_welfare_diagram_functions.jl")
 

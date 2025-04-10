@@ -3,7 +3,7 @@ using JLD2, LaTeXStrings
 using Plots, StatsPlots
 includet("../CES_simDT_structs.jl")
 includet("../CES_policy_table_functions.jl")
-includet("../texout_f.jl")
+# includet("../texout_f.jl")  # deleted
 
 ############################## parameter 3 ################################
 seed = 1224
@@ -171,8 +171,8 @@ B_stats_table = sort(B_stats_table, [:M])
 C_stats_table = sort(C_stats_table, [:M])
 
 
-texout_new(B_stats_table, "Tables/CES_MC/main_est_varyCN/policy_table_ad_valorem/B_policy_table_stats_separate_draw_C2N1_varyM_inferred_true_reduced_filter_extremes_parameter3_retry_new.tex")
-texout_new(C_stats_table, "Tables/CES_MC/main_est_varyCN/policy_table_ad_valorem/C_policy_table_stats_separate_draw_C2N1_varyM_inferred_true_reduced_filter_extremes_parameter3_retry_new.tex")
+# texout_new(B_stats_table, "Tables/CES_MC/main_est_varyCN/policy_table_ad_valorem/B_policy_table_stats_separate_draw_C2N1_varyM_inferred_true_reduced_filter_extremes_parameter3_retry_new.tex")
+# texout_new(C_stats_table, "Tables/CES_MC/main_est_varyCN/policy_table_ad_valorem/C_policy_table_stats_separate_draw_C2N1_varyM_inferred_true_reduced_filter_extremes_parameter3_retry_new.tex")
 
 
 # extract critical_value = "nearest"

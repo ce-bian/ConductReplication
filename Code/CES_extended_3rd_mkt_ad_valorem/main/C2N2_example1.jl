@@ -2,7 +2,7 @@ using Parameters, Optim, ForwardDiff, LinearAlgebra, Distributions, Random
 using PrettyTables, DataFrames, NLsolve, NLSolversBase, RCall, ThreadsX, Revise
 using CSV, JLD2, Test, Plots, StatsPlots, LaTeXStrings
 
-includet("../CES_extended_3rd_mkt_structs.jl")
+includet("../../CES_structs.jl")
 includet("../CES_solve_eqba_m_functions.jl")
 includet("../CES_eqba_properties_m_functions.jl")
 includet("../CES_welfare_m_functions.jl")
@@ -19,7 +19,7 @@ TOL = 1e-8 # tolerance level
 MAX_RETRIES = 300
 
 
-Y_m = 10.0
+Y_m = 1.0
 exp_ξ_m = [1.0; 2.0;; 1.0; 2.0]
 exp_ω_m = [1.0; 1.0;; 1.0; 1.0]
 S_m = [0.0,0.0]

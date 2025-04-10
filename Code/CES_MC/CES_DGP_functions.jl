@@ -1,5 +1,6 @@
 # this version still assumes N is common across all origins.
 # using Parameters, LinearAlgebra, Distributions, Random, DataFrames, ThreadsX
+
 Σ(x)= sum(x)
 
 function set_θ(GP::global_param, task_rng::AbstractRNG)
@@ -19,17 +20,23 @@ function set_θ(GP::global_param, task_rng::AbstractRNG)
     V_Y = GP.V_Y
     μ_ξ = GP.μ_ξ
     V_ξ = GP.V_ξ
+    μ_ξ0 = GP.μ_ξ0
+    V_ξ0 = GP.V_ξ0
     μ_ω = GP.μ_ω
     V_ω = GP.V_ω
+    μ_ω0 = GP.μ_ω0  # add
+    V_ω0 = GP.V_ω0  # add
     off1 = GP.off1
     off2 = GP.off2
+    off10 = GP.off10
+    off20 = GP.off20
     μ_psi = GP.μ_psi
     V_psi = GP.V_psi
     β = GP.β
     Y = rand(task_rng,LogNormal(μ_Y, V_Y),C+M)
     # V_mvnormal = MvNormal([1.0;1.0],[V_ξ_ω ρ*V_ξ_ω; ρ*V_ξ_ω V_ξ_ω])
     V_mvnormal = MvNormal([μ_ξ;μ_ω],[V_ξ off1; off2 V_ω])
-    temp = rand(task_rng, V_mvnormal,N*C*(C+M)+C+M)' # change
+    temp = rand(task_rng, V_mvnormal,N*C*(C+M))'
     ξ_long = temp[:,1]
     ω_long = temp[:,2]
     ξ = zeros(C,N,(C+M))
@@ -55,8 +62,12 @@ function set_θ(GP::global_param, task_rng::AbstractRNG)
         end
     end
     # outside good
-    exp_ξ0 = exp.(ξ_long[C*N*(C+M)+1:C*N*(C+M)+C+M])
-    exp_ω0 = exp.(ω_long[C*N*(C+M)+1:C*N*(C+M)+C+M])
+    V0_mvnormal = MvNormal([μ_ξ0;μ_ω0],[V_ξ0 off10; off20 V_ω0])  # modified
+    temp = rand(task_rng, V0_mvnormal,C+M)'
+    ξ_long = temp[:,1]
+    ω_long = temp[:,2]
+    exp_ξ0 = exp.(ξ_long)
+    exp_ω0 = exp.(ω_long)
    return sim_dt(GP,Y,exp_ξ,exp_ω,exp_ξ0,exp_ω0,τ)
 end
 
@@ -79,10 +90,16 @@ function set_θ_update_m(m::Int, SDT_old::sim_dt, GP::global_param, task_rng::Ab
     V_Y = GP.V_Y
     μ_ξ = GP.μ_ξ
     V_ξ = GP.V_ξ
+    μ_ξ0 = GP.μ_ξ0
+    V_ξ0 = GP.V_ξ0
     μ_ω = GP.μ_ω
     V_ω = GP.V_ω
+    μ_ω0 = GP.μ_ω0  # add
+    V_ω0 = GP.V_ω0   # add
     off1 = GP.off1
     off2 = GP.off2
+    off10 = GP.off10
+    off20 = GP.off20
    
     Y = SDT_old.Y
     ξ = log.(SDT_old.exp_ξ)
@@ -95,7 +112,7 @@ function set_θ_update_m(m::Int, SDT_old::sim_dt, GP::global_param, task_rng::Ab
     Y[m] = Y_m
 
     V_mvnormal = MvNormal([μ_ξ;μ_ω],[V_ξ off1; off2 V_ω])
-    temp_m = rand(task_rng, V_mvnormal, N*C + 1)'  # change
+    temp_m = rand(task_rng, V_mvnormal, N*C)' 
     ξ_long = temp_m[:,1]
     ω_long = temp_m[:,2]
 
@@ -110,8 +127,10 @@ function set_θ_update_m(m::Int, SDT_old::sim_dt, GP::global_param, task_rng::Ab
     exp_ω = exp.(ω)
 
     # update outside good for m-th market
-    ξ0[m] = ξ_long[N*C+1]
-    ω0[m] = ω_long[N*C+1]
+    V0_mvnormal = MvNormal([μ_ξ0;μ_ω0],[V_ξ0 off10; off20 V_ω0])  # modified
+    temp0_m = rand(task_rng, V0_mvnormal)
+    ξ0[m] = temp0_m[1]
+    ω0[m] = temp0_m[2]
     exp_ξ0 = exp.(ξ0)
     exp_ω0 = exp.(ω0)
 
@@ -141,11 +160,11 @@ RS_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0
 # marginal costs (modified)
 MC_icm(c::Int,i::Int,m::Int,τ::Array{Float64,2},exp_ω_m::Array{Float64,2}) = τ[c,m]*exp_ω_m[c,i]
 MC_0mm(τ::Array{Float64,2},exp_ω0_m::Float64) = 1*exp_ω0_m # τ[m,m] = 1 in current setting
-# prices (not used at this point)
-PB_icm(c::Int, i::Int,m::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, exp_ω_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, τ::Array{Float64,2},σ) = μB_icm(c,i,P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_icm(c,i,m,τ,exp_ω_m)
-PC_icm(c::Int, i::Int, m::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, exp_ω_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, τ::Array{Float64,2},σ) = μC_icm(c,i,P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_icm(c,i,m,τ,exp_ω_m)
-PB_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, exp_ω0_m::Float64, τ::Array{Float64,2},σ) = μB_0mm(P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_0mm(τ,exp_ω0_m)
-PC_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, exp_ω0_m::Float64, τ::Array{Float64,2},σ) = μC_0mm(P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_0mm(τ,exp_ω0_m)
+# # prices (not used at this point)
+# PB_icm(c::Int, i::Int,m::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, exp_ω_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, τ::Array{Float64,2},σ) = μB_icm(c,i,P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_icm(c,i,m,τ,exp_ω_m)
+# PC_icm(c::Int, i::Int, m::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, exp_ω_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, τ::Array{Float64,2},σ) = μC_icm(c,i,P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_icm(c,i,m,τ,exp_ω_m)
+# PB_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, exp_ω0_m::Float64, τ::Array{Float64,2},σ) = μB_0mm(P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_0mm(τ,exp_ω0_m)
+# PC_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, exp_ω0_m::Float64, τ::Array{Float64,2},σ) = μC_0mm(P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_0mm(τ,exp_ω0_m)
 # markups given market shares
 μB_icm_R(c::Int,i::Int,RS::Array{Float64,2},σ) = 1/((σ-1)*(1-RS[c,i])) + 1
 μC_icm_R(c::Int,i::Int,RS::Array{Float64,2},σ) = σ/((σ-1)*(1-RS[c,i]))
@@ -199,7 +218,8 @@ function solve_P_m_R(R::String, m::Int, C::Int, N::Int, exp_ξ_m::Array{Float64,
         k += 1
     end   
     @assert k < MAXIT "No convergence after $(MAXIT) iterations"
-   #  @assert all(P_m_g .> 0) "Negative prices found"
+    # add (just play safe, not sure how negative prices will be generated...)
+    @assert all(P_m_g .> 0) "Negative prices found"
 
     return P_m_g, P0_m_g
 end
@@ -263,6 +283,13 @@ function DGP_t(t::Int64, R::String, GP::global_param, global_seed::Int64, full::
     while true
         try
             P[:,:,m], P0[m] = solve_P_m_R(R, m, C, N, exp_ξ[:,:,m], exp_ω[:,:,m], exp_ξ0[m], exp_ω0[m], τ, σ, w, MAXIT, TOL)
+            # the following will create endogeneity???
+            # # add, rule out extreme cases
+            # RS_icm_temp = [RS_icm(c,i,P[:,:,m],exp_ξ[:,:,m],P0[m],exp_ξ0[m], σ) for c in 1:C, i in 1:N]
+            # RS0_temp = RS_0mm(P[:,:,m],exp_ξ[:,:,m],P0[m],exp_ξ0[m],σ)
+            # # check if the market share has extreme values (larger than 70%)
+            # @assert maximum(RS_icm_temp) < 0.7 
+            # @assert RS0_temp < 0.35
             break # Break the loop if the above line executes successfully
         catch e
             num_retry += 1
@@ -337,6 +364,7 @@ function DT_for_reg(eq::Union{eqbm, eqbm_full}, full::Bool)
     RS0 = eq.RS0
     τ = eq.τ
     σ = eq.GP.σ
+    R = eq.R
     
     # inside good relative revenues (identical to relative shares)
     RV_normalized = zeros(C,N,C+M)

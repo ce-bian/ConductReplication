@@ -1,7 +1,7 @@
 # original files: new_DGP_output_C2N1 and new_DGP_output_generalized. 
 
 using Parameters, Optim, ForwardDiff, LinearAlgebra, Distributions, Random
-using PrettyTables, DataFrames, NLsolve, NLSolversBase, RCall, ThreadsX, Revise, DataFramesMeta
+using PrettyTables, DataFrames, NLsolve, NLSolversBase, ThreadsX, Revise, DataFramesMeta
 using CSV, JLD2,  LaTeXStrings, Glob
 includet("../../CES_structs.jl")
 includet("../CES_DGP_functions.jl")
@@ -46,3 +46,13 @@ for combo in C_N_list
 
     output_JLD2_file(seed, inputFile, outputFile)
 end  
+
+# # check estimates
+# dfB, dfC = load("Data/dfB_dfC_GP_C2_N1_M1000.jld2", "dfB", "dfC")
+
+
+# dfB, dfC = load("Data/dfB_dfC_GP_C3_N1_M1000.jld2", "dfB", "dfC")
+
+
+
+

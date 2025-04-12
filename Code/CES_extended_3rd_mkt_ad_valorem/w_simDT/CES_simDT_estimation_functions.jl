@@ -223,7 +223,8 @@ function simDT_bootstrap_t(R::String, global_seed::Int64, GP::global_param, eq_i
     
     # add: throw an error if var_DSB or var_DSC is too large
     # @assert var_DSB < 1e3 && var_DSC < 1e3
-    println("period $t done.")
+    
+    # println("period $t done.")
     return df
 end
 
@@ -318,7 +319,7 @@ function simDT_bootstrap_MC_safe(R::String, GP::global_param, eq_input::eqbm_out
         try
             return (idx=t, success=true, result = simDT_bootstrap_t(R, seed, GP, eqbm_t_list[t], B, t, full, B_seed))
         catch e
-            println("Error in task $t: $e", " - retry later")
+            # println("Error in task $t: $e", " - retry later")
             return (idx=t, success=false, result=nothing)
         end
     end  

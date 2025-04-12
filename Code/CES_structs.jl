@@ -96,7 +96,7 @@ end
 
 
 # equilibrium object for a single market
-struct eqbm_m #equilibrium objects + input data
+mutable struct eqbm_m #equilibrium objects + input data
     IDT::input_dt_m
     R::String
     P_m :: Array{Float64,2}

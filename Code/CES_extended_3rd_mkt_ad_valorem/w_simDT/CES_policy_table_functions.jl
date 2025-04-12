@@ -310,85 +310,71 @@ end
 
 
 
-
 function W_closest_inferred_true_varyM_full_f(InputDTFile::String, InputEstFile::String, c::Int64, selected_M::Int64; Output = false, OutputFile::String = "")
-    """
-    Determine the optimal conduct for each t based on the closest test statistics
-        - InputDTFile: the file containing the simulated data
-        - InputEstFile: the file containing the estimates
-
-    Output:
-        - dfB_optimal_conduct: DataFrame containing the optimal conduct for Bertrand
-        - dfC_optimal_conduct: DataFrame containing the optimal conduct for Cournot 
-    """
     dfB, dfC, GP = load(InputEstFile, "dfB", "dfC", "GP")
-    # get the unique t_list 
+    eqbm_output_B, eqbm_output_C, _ = load(InputDTFile, "eqbm_output_B", "eqbm_output_C", "GP")
+    eqbm_subset_B = sample_mkt_f(eqbm_output_B, selected_M)
+    eqbm_subset_C = sample_mkt_f(eqbm_output_C, selected_M)
+    eqbm_t_list_B = eqbm_subset_B.eqbm_t_list
+    eqbm_t_list_C = eqbm_subset_C.eqbm_t_list
+
     t_list_B = unique(dfB.t)
     t_list_C = unique(dfC.t)
     T_length_B = length(t_list_B)
     T_length_C = length(t_list_C)
     T_dict_B = Dict(i => t_list_B[i] for i in 1:T_length_B)
     T_dict_C = Dict(i => t_list_C[i] for i in 1:T_length_C)
-    # # sort T_dict_C
-    # T_dict_C = sort(T_dict_C)
-    # T_dict_B = sort(T_dict_B)
-    dfB_inferred_conduct = DataFrame(DGP = String[], t = Int64[], optimal_conduct = String[])
-    dfC_inferred_conduct = DataFrame(DGP = String[], t = Int64[], optimal_conduct = String[])
 
-    eqbm_output_B, eqbm_output_C, GP = load(InputDTFile, "eqbm_output_B", "eqbm_output_C", "GP");
-    eqbm_subset_B = sample_mkt_f(eqbm_output_B, selected_M);
-    eqbm_subset_C = sample_mkt_f(eqbm_output_C, selected_M);
-    eqbm_t_list_B = eqbm_subset_B.eqbm_t_list
-    eqbm_t_list_C = eqbm_subset_C.eqbm_t_list
+    W_dfB_chunks = Vector{Any}(undef, T_length_B)
+    dfB_inferred_conduct_data = Vector{Tuple{String, Int64, String}}(undef, T_length_B)
 
-    W_dfB = []
-    W_dfC = []
-    for t in 1:T_length_B
+    pb_B = Progress(T_length_B, desc = "Processing B", dt = 0.5)
+
+    Threads.@threads for t in 1:T_length_B
         dfB_t = @subset(dfB, :t .== T_dict_B[t])
-        inferred_conduct_t = inferred_conduct_t_closest_f(dfB_t.σD_IV[1], dfB_t.σDSB_GMM[1], dfB_t.σDSC_GMM[1])
-        push!(dfB_inferred_conduct, ("B", T_dict_B[t], inferred_conduct_t))
-        # est_eqbm_true_R_t = estimated_eqbm_t_f("B", eqbm_t_list_B[t], dfB_t.σDSB_GMM[1]) # estimated eqbm based on the true conduct
-        # only process if the conduct is determined
-        if inferred_conduct_t == "B"
-            est_eqbm_t = estimated_eqbm_t_f("B", eqbm_t_list_B[t], dfB_t.σDSB_GMM[1])
-            W_df_m = optimal_s_inferred_true_full_t("B", "B", est_eqbm_t, eqbm_t_list_B[t], c, GP.C, selected_M, T_dict_B[t])
-            push!(W_dfB, W_df_m)
+        inferred = inferred_conduct_t_closest_f(dfB_t.σD_IV[1], dfB_t.σDSB_GMM[1], dfB_t.σDSC_GMM[1])
+        dfB_inferred_conduct_data[t] = ("B", T_dict_B[t], inferred)
+        est_eqbm_t = if inferred == "B"
+            estimated_eqbm_t_f("B", eqbm_t_list_B[t], dfB_t.σDSB_GMM[1])
+        elseif inferred == "C"
+            estimated_eqbm_t_f("C", eqbm_t_list_B[t], dfB_t.σDSC_GMM[1])
+        else
+            eqbm_t_list_B[t]  # use true equilibrium, doesn't matter
         end
-        if inferred_conduct_t == "C"
-            est_eqbm_t = estimated_eqbm_t_f("C", eqbm_t_list_B[t], dfB_t.σDSC_GMM[1])
-            W_df_m = optimal_s_inferred_true_full_t("B", "C", est_eqbm_t, eqbm_t_list_B[t], c, GP.C, selected_M, T_dict_B[t])
-            push!(W_dfB, W_df_m)
-        end        
-        if inferred_conduct_t == "N"
-            W_df_m = optimal_s_inferred_true_full_t("B", "N", est_eqbm_true_R_t, eqbm_t_list_B[t], c, GP.C, selected_M, T_dict_B[t])
-            push!(W_dfB, W_df_m)
-        end   
+        W_dfB_chunks[t] = optimal_s_inferred_true_full_t("B", inferred, est_eqbm_t, eqbm_t_list_B[t], c, GP.C, selected_M, T_dict_B[t])
+        next!(pb_B)
     end
-    for t in 1:T_length_C
+
+    W_dfC_chunks = Vector{Any}(undef, T_length_C)
+    dfC_inferred_conduct_data = Vector{Tuple{String, Int64, String}}(undef, T_length_C)
+
+    pb_C = Progress(T_length_C, desc = "Processing C", dt = 0.5)
+
+    Threads.@threads for t in 1:T_length_C
         dfC_t = @subset(dfC, :t .== T_dict_C[t])
-        inferred_conduct_t = inferred_conduct_t_closest_f(dfC_t.σD_IV[1], dfC_t.σDSB_GMM[1], dfC_t.σDSC_GMM[1])
-        push!(dfC_inferred_conduct, ("C", T_dict_C[t], inferred_conduct_t))
-        # est_eqbm_true_R_t = estimated_eqbm_t_f("C", eqbm_t_list_C[t], dfC_t.σDSC_GMM[1])
-         # only proceed further if the conduct is determined
-        if inferred_conduct_t == "B"
-            est_eqbm_t = estimated_eqbm_t_f("B", eqbm_t_list_C[t], dfC_t.σDSB_GMM[1])
-            W_df_m = optimal_s_inferred_true_full_t("C", "B", est_eqbm_t, eqbm_t_list_C[t], c, GP.C, selected_M, T_dict_C[t])
-            push!(W_dfC, W_df_m)
+        inferred = inferred_conduct_t_closest_f(dfC_t.σD_IV[1], dfC_t.σDSB_GMM[1], dfC_t.σDSC_GMM[1])
+        dfC_inferred_conduct_data[t] = ("C", T_dict_C[t], inferred)
+        est_eqbm_t = if inferred == "B"
+            estimated_eqbm_t_f("B", eqbm_t_list_C[t], dfC_t.σDSB_GMM[1])
+        elseif inferred == "C"
+            estimated_eqbm_t_f("C", eqbm_t_list_C[t], dfC_t.σDSC_GMM[1])
+        else
+            eqbm_t_list_C[t]  # use true equilibrium, doesn't matter
         end
-        if inferred_conduct_t == "C"
-            est_eqbm_t = estimated_eqbm_t_f("C", eqbm_t_list_C[t], dfC_t.σDSC_GMM[1])
-            W_df_m = optimal_s_inferred_true_full_t("C", "C", est_eqbm_t, eqbm_t_list_C[t], c, GP.C, selected_M, T_dict_C[t])
-            push!(W_dfC, W_df_m)
-        end       
-        if inferred_conduct_t == "N"
-            W_df_m = optimal_s_inferred_true_full_t("C", "N", est_eqbm_true_R_t, eqbm_t_list_C[t], c, GP.C, selected_M, T_dict_C[t])
-            push!(W_dfC, W_df_m)
-        end
+        W_dfC_chunks[t] = optimal_s_inferred_true_full_t("C", inferred, est_eqbm_t, eqbm_t_list_C[t], c, GP.C, selected_M, T_dict_C[t])
+        next!(pb_C)
     end
-    W_dfB = vcat(W_dfB...)
-    # W_dfB[!, :DGP] = "B"    
-    W_dfC = vcat(W_dfC...)
-    # W_dfC[!, :DGP] = "C"
+
+    dfB_inferred_conduct = DataFrame(DGP = [x[1] for x in dfB_inferred_conduct_data],
+                                     t = [x[2] for x in dfB_inferred_conduct_data],
+                                     optimal_conduct = [x[3] for x in dfB_inferred_conduct_data])
+    dfC_inferred_conduct = DataFrame(DGP = [x[1] for x in dfC_inferred_conduct_data],
+                                     t = [x[2] for x in dfC_inferred_conduct_data],
+                                     optimal_conduct = [x[3] for x in dfC_inferred_conduct_data])
+
+    W_dfB = vcat(W_dfB_chunks...)
+    W_dfC = vcat(W_dfC_chunks...)
+
     if Output
         save(OutputFile, "dfB_inferred_conduct", dfB_inferred_conduct, "dfC_inferred_conduct", dfC_inferred_conduct, "W_dfB", W_dfB, "W_dfC", W_dfC)
     end

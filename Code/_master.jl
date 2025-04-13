@@ -28,8 +28,7 @@ include("CES_extended_3rd_mkt_ad_valorem/main/C4N4_example1.jl")
 # main DGP and data output for C2N1 and C3N1
 include("CES_MC/main/new_DGP_output.jl")
 
-
-# not running yet  
+ 
 # estimation for varying M with C=2, N=1
 include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/est_simDT_varyM_C2N1.jl")
 

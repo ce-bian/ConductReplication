@@ -57,13 +57,13 @@ end
 # close(log_file)
 
 
-InputDTfile = "Data/eqbaB_eqbaC_GP_C$(C)_N$(N)_M$(M).jld2"  
-# eqbm_output objects 
-eqbm_output_B, eqbm_output_C, GP, seed = load(InputDTfile, "eqbm_output_B", "eqbm_output_C", "GP", "seed");
-eqbm_output_B.eqbm_t_list[2].eqbm_m_list[3]
+# InputDTfile = "Data/eqbaB_eqbaC_GP_C$(C)_N$(N)_M$(M).jld2"  
+# # eqbm_output objects 
+# eqbm_output_B, eqbm_output_C, GP, seed = load(InputDTfile, "eqbm_output_B", "eqbm_output_C", "GP", "seed");
+# eqbm_output_B.eqbm_t_list[2].eqbm_m_list[3]
 
-C = 3
-InputDTfile = "Data/eqbaB_eqbaC_GP_C$(C)_N$(N)_M$(M).jld2"  
-# eqbm_output objects 
-eqbm_output_B, eqbm_output_C, GP, seed = load(InputDTfile, "eqbm_output_B", "eqbm_output_C", "GP", "seed");
-eqbm_output_B.eqbm_t_list[2].eqbm_m_list[3]
+# C = 3
+# InputDTfile = "Data/eqbaB_eqbaC_GP_C$(C)_N$(N)_M$(M).jld2"  
+# # eqbm_output objects 
+# eqbm_output_B, eqbm_output_C, GP, seed = load(InputDTfile, "eqbm_output_B", "eqbm_output_C", "GP", "seed");
+# eqbm_output_B.eqbm_t_list[2].eqbm_m_list[3]

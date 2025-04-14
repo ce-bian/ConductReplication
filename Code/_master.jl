@@ -35,7 +35,10 @@ include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/est_simDT_varyM_C2N1.jl")
 # optimal trade policy and welfare analysis for C=2, N=1
 include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/policy_table_C2N1.jl")
 
-# figure 5-7
+# Table 1
+include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/parameters_texout_C2N1.jl")
+
+# Figure 5-7
 include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/output_C2N1.jl")
 
 # estimation for varying M with C=3, N=1
@@ -45,4 +48,5 @@ include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/est_simDT_varyM_C3N1.jl")
 include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/policy_table_C3N1.jl")
 
 
-
+# Figure 8 
+include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/output_C3N1.jl")

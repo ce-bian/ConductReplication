@@ -1,5 +1,4 @@
 # ConductReplication
-**work in progress, do not use the code yet!**
 
 Replication package for "Inferring Conduct to Guide Strategic Trade Policy" by Eileen (Ce) Bian, Keith Head and Scott Orr
 

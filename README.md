@@ -1,5 +1,6 @@
 # ConductReplication
-(work in progress, do not use the code yet!)
+**work in progress, do not use the code yet!**
+
 Replication package for "Inferring Conduct to Guide Strategic Trade Policy" by Eileen (Ce) Bian, Keith Head and Scott Orr
 
 This project is entirely coded in Julia. **Project.toml** contains all required packages and dependencies based on Julia v1.10.0 (the code may or may not work with other versions).

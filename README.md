@@ -18,6 +18,7 @@ To install the dependencies, you can either (1) open the folder in VSCode and ru
 ```julia
 using Pkg
 Pkg.activate(".")
+Pkg.instantiate() 
 ```
 or (2) open a terminal and navigate to the folder and run the following command:
 ```bash
@@ -29,3 +30,5 @@ julia --project=/Users/cbian/Dropbox/MyProject -e 'using Pkg; Pkg.instantiate()'
 Note that two files are not included in this repository (but will be in the journal replication package) due to size constraints (> 100MB), you can download them from the following links: 
 - Data/eqbaB_eqbaC_GP_C2_N1_M1000.jld2: the simulated equilibrium data for C=2 and N=1 
 - Data/eqbaB_eqbaC_GP_C3_N1_M1000.jld2: the simulated equilibrium data for C=3 and N=1 
+
+Contact [Eileen Bian](mailto:ce.bian@sauder.ubc.ca) if you have any questions or issues with the code.

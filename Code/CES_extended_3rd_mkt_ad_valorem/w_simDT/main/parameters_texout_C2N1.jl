@@ -25,6 +25,6 @@ df = DataFrame(variable = [L"Y_m", L"\xi_{icm}", L"\xi_{0mm}", L"\omega_{icm}", 
     note = ["Market size", "Demand shifter of importing goods", "Demand shifter of local goods", "Cost shifter of exporters", "Cost shifter of local firms", "Trade cost shifter", "Elasticity", "Demand-cost correlation of importing goods", "Demand-cost correlation of local goods"])
 # transform the dataframe to a matrix
 # df = Matrix(df)
-open("Tables/Table1", "w") do io
+open("Tables/Table1.tex", "w") do io
     pretty_table(io, df, header=["variable", "value", "mean", "variance", "definition"],  backend = Val(:latex))
 end

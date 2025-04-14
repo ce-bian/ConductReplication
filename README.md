@@ -3,7 +3,7 @@
 
 Replication package for "Inferring Conduct to Guide Strategic Trade Policy" by Eileen (Ce) Bian, Keith Head and Scott Orr
 
-This project is entirely coded in Julia. **Project.toml** contains all required packages and dependencies based on Julia v1.10.0 (the code may or may not work with other versions).
+This project is entirely coded in Julia. **Project.toml** contains all required packages and dependencies based on Julia v1.10.0 (the code may or may not work with other versions and the results may differ).
 
 You can install Julia v1.10.0 from Terminal using the following command:
 ```bash

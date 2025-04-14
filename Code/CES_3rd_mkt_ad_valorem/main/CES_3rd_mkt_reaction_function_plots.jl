@@ -44,7 +44,7 @@ p = scatter!([100*Q1_eq_s], [100*Q2_eq_s], color=:black)
 p = annotate!(63,90 , text(L"R_1(Q_2)", :left, color=:red))
 p = annotate!(5,30 , text(L"R_2(Q_1)", :left, color=:blue))
 p = annotate!(66,8 , text(L"R_1(Q_2, s_1>0)", :left, color=:orange))
-savefig(p, "Figures/CES_3rd_mkt_ad_valorem_reaction_function_Cournot_subsidy_plot.pdf")
+savefig(p, "Figures/Figure1a.pdf")
 
 
 
@@ -91,7 +91,7 @@ p = scatter!([100*Q1_eq_s], [100*Q2_eq_s], color=:black)
 p = annotate!(65,90 , text(L"R_1(Q_2)", :left, color=:red))
 p = annotate!(5,30 , text(L"R_2(Q_1)", :left, color=:blue))
 p = annotate!(20,90 , text(L"R_1(Q_2, s_1< 0)", :left, color=:orange))
-savefig(p, "Figures/CES_3rd_mkt_ad_valorem_reaction_function_Cournot_tax_plot.pdf")
+savefig(p, "Figures/Figures1b.pdf")
 
 
 
@@ -139,7 +139,7 @@ p = scatter!([100*P1_eq_s], [100*P2_eq_s], color=:black)
 p = annotate!(46,55 , text(L"R_1(P_2)", :left, color=:red))
 p = annotate!(17,30 , text(L"R_2(P_1)", :left, color=:blue))
 p = annotate!(36.5,30 , text(L"R_1(P_2, s_1<0)", :left, color=:orange))
-savefig(p, "Figures/CES_3rd_mkt_ad_valorem_reaction_function_Bertrand_tax_plot.pdf")
+savefig(p, "Figures/Figure1d.pdf")
 
 
 
@@ -181,4 +181,4 @@ p = scatter!([100*P1_eq_s], [100*P2_eq_s], color=:black)
 p = annotate!(46,55 , text(L"R_1(P_2)", :left, color=:red))
 p = annotate!(17,30 , text(L"R_2(P_1)", :left, color=:blue))
 p = annotate!(22,45 , text(L"R_1(P_2, s_1>0)", :left, color=:orange))
-savefig(p, "Figures/CES_3rd_mkt_ad_valorem_reaction_function_Bertrand_subsidy_plot.pdf")
+savefig(p, "Figures/Figure1c.pdf")

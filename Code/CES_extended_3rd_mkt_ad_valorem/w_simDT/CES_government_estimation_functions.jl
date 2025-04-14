@@ -7,6 +7,15 @@
 μC_0mm_R(RS0::Float64,σ) = σ/((σ-1)*(1-RS0))
 
 function estimated_eqbm_m_f(R_inferred::String, eq_data::eqbm_m, σ_est::Float64)
+    """
+    Estimate the equilibrium object for a single market using the given data and estimated sigma.
+    Input:
+        - R_inferred: inferred conduct type ("B" or "C")
+        - eq_data: equilibrium object for a single market
+        - σ_est: estimated sigma
+    Output:
+        - est_eq_m: estimated equilibrium object for a single market
+    """
     C = eq_data.IDT.C
     N = eq_data.IDT.N
     m = eq_data.IDT.m
@@ -50,6 +59,15 @@ end
 
 
 function estimated_eqbm_t_f(R_inferred::String, eq_data::eqbm_t, σ_est::Float64)
+    """
+    Estimate the equilibrium object for all markets using the given data and estimated sigma.
+    Input:
+        - R_inferred: inferred conduct type ("B" or "C")
+        - eq_data: equilibrium object for all markets
+        - σ_est: estimated sigma
+    Output:
+        - est_eq_t: estimated equilibrium object for all markets
+    """
     t = eq_data.t
     eqbm_m_list = Array{eqbm_m,1}(undef, length(eq_data.eqbm_m_list))
     for i in 1:length(eq_data.eqbm_m_list)
@@ -59,17 +77,3 @@ function estimated_eqbm_t_f(R_inferred::String, eq_data::eqbm_t, σ_est::Float64
     end
     return eqbm_t(eqbm_m_list, t)
 end
-
-
-# function estimated_eqba_output_f(R_inferred::String, eq_data::eqba_output, σ_est::Float64)
-#     seed = eq_data.seed
-#     eqbm_t_list = Array{eqbm_t,1}(undef, length(eq_data.eqbm_t_list))
-#     for i in 1:length(eq_data.eqbm_t_list)
-#         eqbm_t = eq_data.eqbm_t_list[i]
-#         eqbm_t_est = estimated_eqbm_t_f(R_inferred, eqbm_t, σ_est)
-#         eqbm_t_list[i] = eqbm_t_est
-#     end
-#     return eqbm_output(seed, eqbm_t_list)
-# end
-
-

@@ -1,17 +1,14 @@
-# this version still assumes N is common across all origins.
-# using Parameters, LinearAlgebra, Distributions, Random, DataFrames, ThreadsX
-
-Σ(x)= sum(x)
+include("../fundamental_functions.jl")
 
 function set_θ(GP::global_param, task_rng::AbstractRNG)
     """
     Get the rest of parameters in "θ"
     Input: global parameters (GP) and task-specific random number generator (task_rng)
+    Input:
+        - GP: global parameters
+        - task_rng: task-specific random number generator
     Output:
-        - Y: (C+M) vector of incomes
-        - exp_ξ: C*N*(C+M) array of orgin-firm-market specific demand shifters
-        - exp_ω: C*N*(C+M) array of orgin-firm-market specific cost shifters
-        - τ: C*(C+M) matrix of orgin-market trade costs
+        - sim_dt: simulated data object
     """
     C = GP.C
     N = GP.N
@@ -76,12 +73,13 @@ end
 function set_θ_update_m(m::Int, SDT_old::sim_dt, GP::global_param, task_rng::AbstractRNG)
     """
     Get the rest of parameters in "θ", update m-th market
-    Input: 
+    Input:
+        - m: market index
+        - SDT_old: old simulated data object
+        - GP: global parameters
+        - task_rng: task-specific random number generator
     Output:
-        - Y: (C+M) vector of incomes
-        - exp_ξ: C*N*(C+M) array of orgin-firm-market specific demand shifters
-        - exp_ω: C*N*(C+M) array of orgin-firm-market specific cost shifters
-        - τ: C*(C+M) matrix of orgin-market trade costs
+        - sim_dt: simulated data object
     """
     C = GP.C
     N = GP.N
@@ -138,39 +136,6 @@ function set_θ_update_m(m::Int, SDT_old::sim_dt, GP::global_param, task_rng::Ab
 end
 
 
-"""
-Input:
-    - m: market index
-    - c: origin index
-    - i: firm index
-    - P_m: C*N array of prices conditional on market m
-    - exp_ξ_m: C*N array of demand shifters conditional on market m
-    - τ: C*(C+M) matrix of trade costs
-    - exp_ω: C*N*(C+M) array of orgin-firm-market specific cost shifters
-"""
-# market shares
-RS_m(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, σ) = Σ((P_m.^(1-σ)).*exp_ξ_m)
-RS_icm(c::Int, i::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, σ) = P_m[c,i]^(1-σ)*exp_ξ_m[c,i]/(P0_m^(1-σ)*exp_ξ0_m+RS_m(P_m,exp_ξ_m,σ))
-RS_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, σ) = P0_m^(1-σ)*exp_ξ0_m/(P0_m^(1-σ)*exp_ξ0_m+RS_m(P_m,exp_ξ_m,σ))
-# markups
-μB_icm(c::Int, i::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, σ) = 1/((σ-1)*(1-RS_icm(c,i,P_m,exp_ξ_m, P0_m,exp_ξ0_m, σ))) + 1
-μC_icm(c::Int, i::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, σ) = σ/((σ-1)*(1-RS_icm(c,i,P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)))
-μB_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, σ) = 1/((σ-1)*(1-RS_0mm(P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ))) + 1
-μC_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, σ) = σ/((σ-1)*(1-RS_0mm(P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)))
-# marginal costs (modified)
-MC_icm(c::Int,i::Int,m::Int,τ::Array{Float64,2},exp_ω_m::Array{Float64,2}) = τ[c,m]*exp_ω_m[c,i]
-MC_0mm(τ::Array{Float64,2},exp_ω0_m::Float64) = 1*exp_ω0_m # τ[m,m] = 1 in current setting
-# # prices (not used at this point)
-# PB_icm(c::Int, i::Int,m::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, exp_ω_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, τ::Array{Float64,2},σ) = μB_icm(c,i,P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_icm(c,i,m,τ,exp_ω_m)
-# PC_icm(c::Int, i::Int, m::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, exp_ω_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, τ::Array{Float64,2},σ) = μC_icm(c,i,P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_icm(c,i,m,τ,exp_ω_m)
-# PB_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, exp_ω0_m::Float64, τ::Array{Float64,2},σ) = μB_0mm(P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_0mm(τ,exp_ω0_m)
-# PC_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, exp_ω0_m::Float64, τ::Array{Float64,2},σ) = μC_0mm(P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_0mm(τ,exp_ω0_m)
-# markups given market shares
-μB_icm_R(c::Int,i::Int,RS::Array{Float64,2},σ) = 1/((σ-1)*(1-RS[c,i])) + 1
-μC_icm_R(c::Int,i::Int,RS::Array{Float64,2},σ) = σ/((σ-1)*(1-RS[c,i]))
-μB_0mm_R(RS0::Float64,σ) = 1/((σ-1)*(1-RS0)) + 1
-μC_0mm_R(RS0::Float64,σ) = σ/((σ-1)*(1-RS0))
-
 
 
 function solve_P_m_R(R::String, m::Int, C::Int, N::Int, exp_ξ_m::Array{Float64,2}, exp_ω_m::Array{Float64,2}, exp_ξ0_m::Float64, exp_ω0_m::Float64, τ::Array{Float64,2}, σ::Float64, w::Float64, MAXIT::Int64, TOL::Float64)
@@ -198,8 +163,6 @@ function solve_P_m_R(R::String, m::Int, C::Int, N::Int, exp_ξ_m::Array{Float64,
     # # define μR_icm based on input R
     μR_icm = R == "B" ? μB_icm : μC_icm   
     μR_0mm = R == "B" ? μB_0mm : μC_0mm 
-    #PR_icm = R == "B" ? PB_icm : PC_icm
-    #PR_0mm = R == "B" ? PB_0mm : PC_0mm
 
     # initial guess: P_m_g: C*N matrix
     P_m_g = [σ/(σ-1)*MC_icm(c,i,m,τ,exp_ω_m) for c in 1:C, i in 1:N]
@@ -208,9 +171,8 @@ function solve_P_m_R(R::String, m::Int, C::Int, N::Int, exp_ξ_m::Array{Float64,
     diff = 1.0
     while diff > TOL && k<MAXIT
         P_m_N = [μR_icm(c,i,P_m_g,exp_ξ_m,P0_m_g,exp_ξ0_m,σ)*MC_icm(c,i,m,τ,exp_ω_m) for c in 1:C, i in 1:N] 
-        # P_m_N = [PR_icm(c,i,m, P_m_g, exp_ξ[:,:,m],exp_ω,P0_m_g,exp_ξ[m], τ,σ) for c in 1:C, i in 1:N]
         P0_m_N = μR_0mm(P_m_g,exp_ξ_m,P0_m_g,exp_ξ0_m,σ)*MC_0mm(τ,exp_ω0_m)
-        # P0_m_N = PR_0mm(m, P_m_g,exp_ξ[:,:,m],P0_m_g,exp_ξ0[m],exp_ω0,τ,σ)
+
         diff = maximum(max.(abs.(P_m_N-P_m_g),abs(P0_m_N-P0_m_g)))
         P_m_g = w.*P_m_g .+ (1-w).*P_m_N
         P0_m_g = w*P0_m_g + (1-w)*P0_m_N
@@ -235,19 +197,7 @@ function DGP_t(t::Int64, R::String, GP::global_param, global_seed::Int64, full::
         - global_seed: global seed for random number generator
         - full: whether to output full equilibrium objects
     Output:
-        - P: C*N*(C+M) array of prices
-        - P0: C+M vector of prices of outside goods
-        - RS: C*N*(C+M) array of revenue shares
-        - RS0: C+M vector of revenue shares of outside goods
-        - RV: N*C*M array of revenues (optional)
-        - RV0: C+M vector of revenues of outside goods (optional)
-        - Y: C+M vector of market sizes
-        - exp_ξ: C*N*(C+M) array of orgin-firm-market specific demand shifters (optional)
-        - exp_ω: C*N*(C+M) array of orgin-firm-market specific cost shifters (optional)
-        - exp_ξ0: C+M vector of demand shifters for outside goods (optional)
-        - exp_ω0: C+M vector of cost shifters for outside goods (optional)
-        - τ: C*(C+M) matrix of trade costs
-        - herfindahl: Herfindahl index
+        - eqbm: equilibrium object
     """
     C = GP.C
     N = GP.N
@@ -283,13 +233,6 @@ function DGP_t(t::Int64, R::String, GP::global_param, global_seed::Int64, full::
     while true
         try
             P[:,:,m], P0[m] = solve_P_m_R(R, m, C, N, exp_ξ[:,:,m], exp_ω[:,:,m], exp_ξ0[m], exp_ω0[m], τ, σ, w, MAXIT, TOL)
-            # the following will create endogeneity???
-            # # add, rule out extreme cases
-            # RS_icm_temp = [RS_icm(c,i,P[:,:,m],exp_ξ[:,:,m],P0[m],exp_ξ0[m], σ) for c in 1:C, i in 1:N]
-            # RS0_temp = RS_0mm(P[:,:,m],exp_ξ[:,:,m],P0[m],exp_ξ0[m],σ)
-            # # check if the market share has extreme values (larger than 70%)
-            # @assert maximum(RS_icm_temp) < 0.7 
-            # @assert RS0_temp < 0.35
             break # Break the loop if the above line executes successfully
         catch e
             num_retry += 1
@@ -339,20 +282,7 @@ function DT_for_reg(eq::Union{eqbm, eqbm_full}, full::Bool)
        - eq: equilibrium object, can be either eqbm or eqbm_full
        - full: whether to input & output full equilibrium objects
     Output:
-        - DT: a dataframe with C*N*(C+M) observations. 
-              Each observation is a row with the following columns:
-            - c: origin index
-            - i: firm index
-            - m: market index
-            - R_normalized: normalized revenue, LHS variable
-            - RS: revenue share
-            - RV: revenue (optional)
-            - P: relative price
-            - τ: relative trade cost 
-            - μ_R_true: markup (optional)
-            - ξ: demand shifter (optional)
-            - ω: cost shifter (optional)
-            - v_true: residual (optional)
+        - DT: DataFrame for regression
     """
     C = eq.GP.C
     N = eq.GP.N

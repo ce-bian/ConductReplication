@@ -218,18 +218,6 @@ function Cournot_dp_icm_dq_jkm_single_f(eq::eqbm_m_no_OG, c::Int, i::Int, k::Int
 end
 
 
-# # require full information
-# function π_q_m(exp_ξ_m::Array{Float64, 2}, Q_m::Array{Float64, 2}, MC_m::Array{Float64, 2} , C::Int, N::Int, σ)
-    
-#     π_q_m = zeros(C, N)
-#     for c in 1:C
-#         for i in 1:N
-#             π_q_m[c,i] = (P_icm(c, i, Q_m, exp_ξ_m, σ) - MC_m[c,i]) * Q_m[c,i]
-#         end
-#     end
-#     return π_q_m
-# end
-
 
 # Bertrand FOC
 function Bertrand_dπ_dp_f(eq::Union{eqbm_no_OG, eqbm_full_no_OG})

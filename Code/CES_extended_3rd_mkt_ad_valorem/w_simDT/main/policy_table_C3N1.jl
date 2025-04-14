@@ -38,12 +38,9 @@ c = 1 # first market
 
 
 ## based on Hausman test
-critical_value_list = [6.635, 3.841, 2.706] # 90%, 95%, 99% confidence intervals
-# critical_value_list = [3.841, 6.635] 
-# critical_value_list = [6.635] 
+critical_value_list = [2.706, 3.841, 6.635] # 90%, 95%, 99% confidence intervals
 for critical_value in critical_value_list
     for M_select in M_list
-        # GP = global_param(C=C, N=N, M=M, μ_Y=μ_Y, V_Y=V_Y, μ_ξ=μ_ξ, V_ξ=V_ξ, μ_ξ0=μ_ξ0, V_ξ0=V_ξ0, μ_ω=μ_ω, V_ω=V_ω, ρ=ρ, off1=off1, off2=off2, off10=off10, off20=off20, μ_psi=μ_psi, V_psi=V_psi, β=β, σ=σ_true, w=w, MAXIT=MAXIT, TOL=TOL, MAX_RETRIES=MAX_RETRIES)
 
         InputDTFile = "Data/eqbaB_eqbaC_GP_C$(C)_N$(N)_M$(M).jld2"
 

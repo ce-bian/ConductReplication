@@ -127,14 +127,6 @@ function Cournot_optimal_s_m_c_f(IDT::input_dt_m, c::Int) # return a scalar, opt
         dp_icm_dq_icm_1 = [Cournot_dp_icm_dq_icm_single_f(eq, c, i) for i in 1:N] # vector
         dp_icm_dq_0mm = [Cournot_dp_icm_dq_0mm_single_f(eq, c, i) for i in 1:N] # vector
 
-        # S_new = (sum([dπ_icm_dq_0mm[i]*dq_0mm_ds_cm for i in 1:N]) 
-        # + sum([dπ_icm_dq_jkm_3[i,k,j]*dq_jkm_ds_cm_2[k,j] for i in 1:N, k in C_list, j in 1:N]))/ sum(dq_icm_ds_cm_1)
-        # S_new = (sum([dπ_icm_dq_0mm[i]*dq_0mm_ds_cm for i in 1:N]) 
-        # + sum([dπ_icm_dq_jkm_3[i,k,j]*dq_jkm_ds_cm_2[k,j] for i in 1:N, k in 1:C, j in 1:N]) -sum([dπ_icm_dq_jkm_3[i,c,i]*dq_jkm_ds_cm_2[c,i] for i in 1:N]))/ ( sum([dq_icm_ds_cm_1[i]*P_m[c,i] for i in 1:N]) + sum([Q_m[c,i]* (sum([dp_icm_dq_jkm_3[i,k,j]*dq_jkm_ds_cm_2[k,j] for i in 1:N, k in 1:C, j in 1:N]) 
-        # - sum([dp_icm_dq_jkm_3[i,c,i]*dq_jkm_ds_cm_2[c,i] for i in 1:N])
-        # + sum([dp_icm_dq_icm_1[i]*dq_icm_ds_cm_1[i] for i in 1:N])
-        # + sum([dp_icm_dq_0mm[i]*dq_0mm_ds_cm for i in 1:N]))] for i in 1:N)
-        # )
         S_new = (
             sum([dπ_icm_dq_0mm[i] * dq_0mm_ds_cm for i in 1:N]) +
             sum([dπ_icm_dq_jkm_3[i, k, j] * dq_jkm_ds_cm_2[k, j] for i in 1:N, k in 1:C, j in 1:N]) -
@@ -164,86 +156,6 @@ function Cournot_optimal_s_m_c_f(IDT::input_dt_m, c::Int) # return a scalar, opt
     return S_old
 end
 
-function Cournot_optimal_s_m_c_f_backup(IDT::input_dt_m, c::Int) # return a scalar & an integer, optimal s for production origin c
-    IDT_m = deepcopy(IDT)
-    N = IDT.N
-    C = IDT.C
-   # C_list = [i for i in 1:C if i != c] 
-    TOL = IDT.TOL
-    MAXIT = IDT.MAXIT
-    k = 1
-    diff = 1.0
-
-    S_old = 0.0
-    S_temp = deepcopy(IDT.S_m)
-    
-    # initiate an eqbm_m object
-    # eq = DGP_m("C", IDT)
-    eq = eqbm_m(IDT, "C", zeros(C,N), 0.0, zeros(C,N), 0.0, zeros(C,N), 0.0, zeros(C,N), 0.0, 0.0, zeros(C,N), 0.0)
-
-    while diff > TOL && k<MAXIT
-        S_temp[c] = S_old
-        IDT_m.S_m .= S_temp
-        try 
-          eq = DGP_m("C", IDT_m)
-        catch
-            return NaN, k, IDT_m, S_temp[c]
-        end 
-        P_m = eq.P_m
-        Q_m = eq.Q_m
-        M_mat = Cournot_d2π_dq1q2_mat_m_f(eq)
-        det_M_mat = det(M_mat)
-        
-        dπ_dsdq_vec = Cournot_dπ_dsdq_m_f(eq, c) #  C*N+1 vector, including OG
-        dπ_icm_dq_0mm = [Cournot_dπ_icm_dq_0mm_single_f(eq, c, i) for i in 1:N]
-        # dπ_icm_dq_jkm_3 = [Cournot_dπ_icm_dq_jkm_single_f(eq, c, i, k, j) for i in 1:N, k in C_list, j in 1:N]
-        dπ_icm_dq_jkm_3 = [Cournot_dπ_icm_dq_jkm_single_f(eq, c, i, k, j) for i in 1:N, k in 1:C, j in 1:N] # 3d array
-        dq_0mm_ds_cm = Cournot_dq_0mm_ds_cm_f(eq, M_mat, det_M_mat, dπ_dsdq_vec) # scalar
-        # dq_jkm_ds_cm_2 = [Cournot_dq_jkm_ds_cm_f(eq, j, k, M_mat, det_M_mat, dπ_dsdq_vec) for k in C_list, j in 1:N]
-        dq_jkm_ds_cm_2 = [Cournot_dq_jkm_ds_cm_f(eq, j, k, M_mat, det_M_mat, dπ_dsdq_vec) for k in 1:C, j in 1:N] # matrix
-        dq_icm_ds_cm_1 = [Cournot_dq_jkm_ds_cm_f(eq, i, c, M_mat, det_M_mat, dπ_dsdq_vec) for i in 1:N] # vector
-
-        # add
-        dp_icm_dq_jkm_3 = [Cournot_dp_icm_dq_jkm_single_f(eq, c, i, k, j) for i in 1:N, k in 1:C, j in 1:N] # 3d array
-        dp_icm_dq_icm_1 = [Cournot_dp_icm_dq_icm_single_f(eq, c, i) for i in 1:N] # vector
-        dp_icm_dq_0mm = [Cournot_dp_icm_dq_0mm_single_f(eq, c, i) for i in 1:N] # vector
-
-        # S_new = (sum([dπ_icm_dq_0mm[i]*dq_0mm_ds_cm for i in 1:N]) 
-        # + sum([dπ_icm_dq_jkm_3[i,k,j]*dq_jkm_ds_cm_2[k,j] for i in 1:N, k in C_list, j in 1:N]))/ sum(dq_icm_ds_cm_1)
-        # S_new = (sum([dπ_icm_dq_0mm[i]*dq_0mm_ds_cm for i in 1:N]) 
-        # + sum([dπ_icm_dq_jkm_3[i,k,j]*dq_jkm_ds_cm_2[k,j] for i in 1:N, k in 1:C, j in 1:N]) -sum([dπ_icm_dq_jkm_3[i,c,i]*dq_jkm_ds_cm_2[c,i] for i in 1:N]))/ (sum([dq_icm_ds_cm_1[i]*P_m[c,i] for i in 1:N]) + sum([Q_m[c,i]* (sum([dp_icm_dq_jkm_3[i,k,j]*dq_jkm_ds_cm_2[k,j] for i in 1:N, k in 1:C, j in 1:N]) 
-        # - sum([dp_icm_dq_jkm_3[i,c,i]*dq_jkm_ds_cm_2[c,i] for i in 1:N])
-        # + sum([dp_icm_dq_icm_1[i]*dq_icm_ds_cm_1[i] for i in 1:N])
-        # + sum([dp_icm_dq_0mm[i]*dq_0mm_ds_cm for i in 1:N]))] for i in 1:N)
-        # )
-        S_new = (
-    sum([dπ_icm_dq_0mm[i] * dq_0mm_ds_cm for i in 1:N]) +
-    sum([dπ_icm_dq_jkm_3[i, k, j] * dq_jkm_ds_cm_2[k, j] for i in 1:N, k in 1:C, j in 1:N]) -
-    sum([dπ_icm_dq_jkm_3[i, c, i] * dq_jkm_ds_cm_2[c, i] for i in 1:N])
-) / (
-    sum([dq_icm_ds_cm_1[i] * P_m[c, i] for i in 1:N]) +
-    sum([
-        Q_m[c, index] * (
-            sum([dp_icm_dq_jkm_3[index, k, j] * dq_jkm_ds_cm_2[k, j] for k in 1:C, j in 1:N]) -
-            dp_icm_dq_jkm_3[index, c, index] * dq_jkm_ds_cm_2[c, index] +
-            dp_icm_dq_icm_1[index] * dq_icm_ds_cm_1[index]  +
-           dp_icm_dq_0mm[index] * dq_0mm_ds_cm 
-        ) for index in 1:N
-    ])
-)
-
-        diff = abs(S_new - S_old)
-        S_old = w*S_old + (1-w)*S_new
-        k += 1
-    end
-   #  @assert k < MAXIT "No convergence of S after $(MAXIT) iterations"
-    if k >= MAXIT
-        println("No convergence of S after $(MAXIT) iterations")
-        return NaN, k
-    end
-
-    return S_old, k, IDT_m, S_old
-end
 
 
 # for Cournot check purposes, no subsidy/tax

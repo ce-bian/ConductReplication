@@ -1,4 +1,3 @@
-# slow version... Ideally just input relevant parameters. Not sure if it affects the performance a lot... 
 # Cournot FOC (inside goods), market m 
 function Cournot_dπ_dq_m_single_f(eq::eqbm_m)
     C = eq.IDT.C

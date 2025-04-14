@@ -1,8 +1,5 @@
 # output simulated data to JLD2 files
-# at this point try to be consistent with CES_solve_eqba_m_functions so that we can directly apply functions there for welfare analysis
-# later will need to merge the two set of files to integrate simulations, estimations and policy analysis (to be done)
-
-
+# Be consistent with CES_solve_eqba_m_functions so that we can directly apply functions there for welfare analysis
 function DGP_output_t(t::Int64, R::String, GP::global_param, global_seed::Int64)
     """
     Output the simulated data in eqbm_output_t format 
@@ -12,7 +9,7 @@ function DGP_output_t(t::Int64, R::String, GP::global_param, global_seed::Int64)
         - GP: global parameters
         - global_seed: global seed for random number generator
     Output:
-        - eqbm_t
+        - eqbm_t object
     """
     C = GP.C
     N = GP.N
@@ -105,7 +102,7 @@ function DGP_output(R::String, seed::Int64, GP::global_param, t_list::Vector{Int
         - GP: global parameters
         - t_list: list of periods 
     Output:
-        - eqbm_output
+        - eqbm_output object
     """
     T_length = length(t_list)
     eqbm_t_list = Array{eqbm_t,1}(undef, T_length)
@@ -128,6 +125,10 @@ end
 function output_JLD2_file(seed::Int, inputFile::String, outputFile::String)
     """
     Save the output to a JLD2 file for a given set of parameters
+    Input:
+        - seed: seed for random number generator
+        - inputFile: input file name
+        - outputFile: output file name
     """
     dfB, dfC, GP = load(inputFile, "dfB", "dfC", "GP")
     # get the unique t_list 

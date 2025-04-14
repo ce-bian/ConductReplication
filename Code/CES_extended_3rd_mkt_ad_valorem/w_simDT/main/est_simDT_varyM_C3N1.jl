@@ -1,5 +1,3 @@
-# output estimation results (estimates + Hausman stats etc) for different M, given simulated data. Already run (2024.7.26)
-# seems no additional functions need to be changed to suit the new data structure for DGP. 
 using Parameters, Optim, ForwardDiff, LinearAlgebra, Distributions, Random
 using PrettyTables, DataFrames, NLsolve, NLSolversBase,ThreadsX, Revise
 using CSV, JLD2, LaTeXStrings, Statistics
@@ -13,9 +11,7 @@ using Plots, StatsPlots
 # redirect_stderr(log_file)
 
 
-# includet("../CES_simDT_structs.jl")
 includet("../../../CES_structs.jl")
-# includet("../../../CES_MC/CES_est_diagnostic_functions.jl")
 includet("../../../CES_MC/CES_est_functions.jl")
 includet("../CES_simDT_estimation_functions.jl")
 includet("../CES_simDT_varyM_functions.jl")
@@ -55,15 +51,3 @@ for selected_M in M_list
 end
 
 # close(log_file)
-
-
-# InputDTfile = "Data/eqbaB_eqbaC_GP_C$(C)_N$(N)_M$(M).jld2"  
-# # eqbm_output objects 
-# eqbm_output_B, eqbm_output_C, GP, seed = load(InputDTfile, "eqbm_output_B", "eqbm_output_C", "GP", "seed");
-# eqbm_output_B.eqbm_t_list[2].eqbm_m_list[3]
-
-# C = 3
-# InputDTfile = "Data/eqbaB_eqbaC_GP_C$(C)_N$(N)_M$(M).jld2"  
-# # eqbm_output objects 
-# eqbm_output_B, eqbm_output_C, GP, seed = load(InputDTfile, "eqbm_output_B", "eqbm_output_C", "GP", "seed");
-# eqbm_output_B.eqbm_t_list[2].eqbm_m_list[3]

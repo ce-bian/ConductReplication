@@ -64,6 +64,9 @@ function est_supply_GMM_twostep(GP::global_param, μR_icm_R::F1, μR_0mm_R::F2,
        - DT: a dataframe
        - W: weighted matrix (default is identity matrix)
        - μR_icm_R: based on R, μR_icm_R is either μB_icm_R or μC_icm_R
+       - μR_0mm_R: based on R, μR_0mm_R is either μB_0mm_R or μC_0mm_R
+       - market_list_input: list of markets to be used for estimation     
+       - seTRUE: whether to calculate standard error  
     Output:
         - σ_optimal: estimated σ   
         - se: standard error 
@@ -166,7 +169,10 @@ function est_supply_demand_GMM_twostep(GP::global_param, μR_icm_R::F1, μR_0mm_
     Input:
         - GP: global parameters
         - μR_icm_R: μB_icm_R (Bertrand) or μC_icm_R (Cournot)
+        - μR_0mm_R: μB_0mm_R (Bertrand) or μC_0mm_R (Cournot)
         - DT: a dataframe
+        - market_list_input: list of markets to be used for estimation
+        - seTRUE: whether to calculate standard error
     Output:
         - σ_optimal: estimated σ
         - se: standard error

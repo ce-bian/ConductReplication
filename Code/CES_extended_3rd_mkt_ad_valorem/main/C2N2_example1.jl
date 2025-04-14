@@ -1,5 +1,5 @@
 using Parameters, Optim, ForwardDiff, LinearAlgebra, Distributions, Random
-using PrettyTables, DataFrames, NLsolve, NLSolversBase, RCall, ThreadsX, Revise
+using PrettyTables, DataFrames, NLsolve, NLSolversBase, ThreadsX, Revise
 using CSV, JLD2, Test, Plots, StatsPlots, LaTeXStrings
 
 includet("../../CES_structs.jl")
@@ -78,7 +78,7 @@ C_shr_text = "Cournot mkt shrs w/o S: " * string(round.(C_shr_list, digits=3))
 B_shr_text = "Bertrand mkt shrs w/o S: " * string(round.(B_shr_list, digits=3))
 annotate!(p, [(-40, -0.13*100, text(C_shr_text, 7, color=:gray))])
 annotate!(p, [(-40, -0.16*100, text(B_shr_text, 7, color=:gray))])
-savefig(p, "Figures/C2N2_delta_Wbigger_example1.pdf")
+savefig(p, "Figures/Figure9a.pdf")
 
 
 C_S1_optimal =Cournot_optimal_s_m_c_f(IDT_m, 1)
@@ -120,5 +120,5 @@ C_shr_text = "Cournot mkt shrs w/o S: " * string(round.(C_shr_list, digits=3))
 B_shr_text = "Bertrand mkt shrs w/o S: " * string(round.(B_shr_list, digits=3))
 annotate!(p, [(-1.25, -0.0005*100, text(C_shr_text, 7, color=:gray))])
 annotate!(p, [(-1.25, -0.0008*100, text(B_shr_text, 7, color=:gray))])
-savefig(p, "Figures/C2N2_delta_Wsmaller_example1.pdf")
+savefig(p, "Figures/Figure9b.pdf")
 

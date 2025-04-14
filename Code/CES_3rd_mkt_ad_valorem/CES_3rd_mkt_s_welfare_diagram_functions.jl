@@ -16,20 +16,7 @@ end
 
 
 function delta_W_s(R::String, IDT::input_dt_m_no_OG, S_m :: Array{Float64,2})
-    # eq_intial = DGP_m(R, IDT)
-    # P_m_inital = eq_intial.P_m
-    # Q_m_inital = eq_intial.Q_m
-    # MC_m_inital = eq_intial.MC_m
-    # W_initial = P_m_inital .* Q_m_inital - MC_m_inital .* Q_m_inital
 
-    # IDT_m = deepcopy(IDT)
-    # IDT_m.S_m .= S_m
-    # eq = DGP_m(R, IDT_m)
-    # P_m = eq.P_m
-    # Q_m = eq.Q_m
-    # MC_m = eq.MC_m
-    # W = P_m .* Q_m - MC_m .* Q_m
-    
     W_initial = W_s(R, IDT, IDT.S_m)
     W = W_s(R, IDT, S_m)
 

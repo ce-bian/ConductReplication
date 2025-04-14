@@ -1,34 +1,15 @@
-# renamed file
 # given data, estimate the parameters. Different from MC_functions where the first step is to simulate data
 
-Σ(x)= sum(x)
-# market shares
-RS_m(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, σ) = Σ((P_m.^(1-σ)).*exp_ξ_m)
-RS_icm(c::Int, i::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, σ) = P_m[c,i]^(1-σ)*exp_ξ_m[c,i]/(P0_m^(1-σ)*exp_ξ0_m+RS_m(P_m,exp_ξ_m,σ))
-RS_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, σ) = P0_m^(1-σ)*exp_ξ0_m/(P0_m^(1-σ)*exp_ξ0_m+RS_m(P_m,exp_ξ_m,σ))
-# markups
-μB_icm(c::Int, i::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, σ) = 1/((σ-1)*(1-RS_icm(c,i,P_m,exp_ξ_m, P0_m,exp_ξ0_m, σ))) + 1
-μC_icm(c::Int, i::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, σ) = σ/((σ-1)*(1-RS_icm(c,i,P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)))
-μB_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, σ) = 1/((σ-1)*(1-RS_0mm(P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ))) + 1
-μC_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, σ) = σ/((σ-1)*(1-RS_0mm(P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)))
-# marginal costs (modified)
-MC_icm(c::Int,i::Int,m::Int,τ::Array{Float64,2},exp_ω_m::Array{Float64,2}) = τ[c,m]*exp_ω_m[c,i]
-MC_0mm(τ::Array{Float64,2},exp_ω0_m::Float64) = 1*exp_ω0_m # τ[m,m] = 1 in current setting
-
-# prices (not used at this point)
-PB_icm(c::Int, i::Int,m::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, exp_ω_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, τ::Array{Float64,2},σ) = μB_icm(c,i,P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_icm(c,i,m,τ,exp_ω_m)
-PC_icm(c::Int, i::Int, m::Int, P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, exp_ω_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, τ::Array{Float64,2},σ) = μC_icm(c,i,P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_icm(c,i,m,τ,exp_ω_m)
-PB_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, exp_ω0_m::Float64, τ::Array{Float64,2},σ) = μB_0mm(P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_0mm(τ,exp_ω0_m)
-PC_0mm(P_m::Array{Float64,2}, exp_ξ_m::Array{Float64,2}, P0_m::Float64, exp_ξ0_m::Float64, exp_ω0_m::Float64, τ::Array{Float64,2},σ) = μC_0mm(P_m,exp_ξ_m,P0_m,exp_ξ0_m,σ)*MC_0mm(τ,exp_ω0_m)
-# markups given market shares
-μB_icm_R(c::Int,i::Int,RS::Array{Float64,2},σ) = 1/((σ-1)*(1-RS[c,i])) + 1
-μC_icm_R(c::Int,i::Int,RS::Array{Float64,2},σ) = σ/((σ-1)*(1-RS[c,i]))
-μB_0mm_R(RS0::Float64,σ) = 1/((σ-1)*(1-RS0)) + 1
-μC_0mm_R(RS0::Float64,σ) = σ/((σ-1)*(1-RS0))
+include("../../fundamental_functions.jl")
 
 function simDT_for_reg(eq_input::eqbm_t, full::Bool)
     """
     Create a DataFrame for regression
+    Input:
+        - eq_input: equilibrium object
+        - full: whether full versions of the estimates are needed
+    Output:
+        - DataFrame of simulated data
     """
     C = eq_input.eqbm_m_list[1].IDT.C
     N = eq_input.eqbm_m_list[1].IDT.N
@@ -112,40 +93,19 @@ function simDT_for_reg(eq_input::eqbm_t, full::Bool)
 end
 
 
-function store_est(R::String, eq_input::eqbm_t, GP::global_param, full::Bool)
-    """
-    return a vector of estimates using different methods
-    Input:
-        - R: "B" (Bertrand) or "C" (Cournot)
-        - eq_input: eqbm_t object, simulated data for a given t/task
-        - global_seed: random seed
-        - GP: global parameters
-        - full: whether full versions of the estimates are needed
-    Output:
-        - dataframe of σD_OLS, σD_IV, σS_OLS, σSB_GMM, σSC_GMM, σDSB_GMM, σDSC_GMM, seSB_GMM, seSC_GMM, seDSB_GMM, seDSC_GMM, herfindahl
-    """
-    
-    RS0 = [eq_input.eqbm_m_list[m].RS0_m for m in 1:GP.C+GP.M]
-    mean_RS0 = mean(RS0)
-    DT = simDT_for_reg(eq_input, full) # one period data
-    σD_OLS = est_demand_OLS(DT)
-    σD_IV = est_demand_IV(DT)
-    σS_OLS = est_supply_OLS(DT)
-    σSB_GMM, seSB_GMM = est_supply_GMM_twostep(GP,μB_icm_R,μB_0mm_R,DT)
-    σSC_GMM, seSC_GMM = est_supply_GMM_twostep(GP,μC_icm_R,μC_0mm_R,DT)
-    σDSB_GMM, seDSB_GMM = est_supply_demand_GMM_twostep(GP,μB_icm_R,μB_0mm_R,DT)
-    σDSC_GMM, seDSC_GMM = est_supply_demand_GMM_twostep(GP,μC_icm_R,μC_0mm_R,DT)
-    df = DataFrame(t=t, R=R, σD_OLS = σD_OLS, σD_IV = σD_IV, σS_OLS = σS_OLS, 
-    σSB_GMM = σSB_GMM[1], σSC_GMM = σSC_GMM[1], σDSB_GMM = σDSB_GMM[1], σDSC_GMM = σDSC_GMM[1],
-    seSB_GMM = seSB_GMM[1],seSC_GMM = seSC_GMM[1], seDSB_GMM=seDSB_GMM[1], seDSC_GMM=seDSC_GMM[1],
-    herfindahl = eq.herfindahl, mean_RS0 = mean_RS0)
-    return df
-end
-
-
 function simDT_bootstrap_single_iteration(t::Int64, iteration::Int64, GP::global_param, DT::DataFrame, size::Int64, global_seed::Int64, iteration_seed::Int64)
     """
     Return estimates for a single iteration in the bootstrap, for demand and supply GMM only
+    Input:
+        - t: time period
+        - iteration: iteration number
+        - GP: global parameters
+        - DT: DataFrame of simulated data
+        - size: size of the bootstrap sample
+        - global_seed: global seed for random number generation
+        - iteration_seed: additional seed for this iteration
+    Output:
+        - DataFrame of estimates for this iteration    
     """
     unique_seed = global_seed + 1000*t + iteration + iteration_seed # Create a unique seed for this task
     task_rng = MersenneTwister(unique_seed)  
@@ -170,6 +130,18 @@ end
 function simDT_bootstrap_t(R::String, global_seed::Int64, GP::global_param, eq_input::eqbm_t, B::Int64, t::Int64, full::Bool, B_seed ::Int64; outputDT::Bool = false, folder_path::String = "")
     """
     Return hausman test for a single t, including DGP
+    Input:
+        - R: type of model
+        - global_seed: global seed for random number generation
+        - GP: global parameters
+        - eq_input: equilibrium object
+        - B: number of bootstrap iterations
+        - t: time period
+        - full: whether full versions of the estimates are needed
+        - B_seed: seed for this bootstrap 
+        - outputDT: whether to output the DataFrame
+    Output:
+        - DataFrame of estimates for this period
     """
 
     RS0 = [eq_input.eqbm_m_list[m].RS0_m for m in 1:GP.C+GP.M]
@@ -229,90 +201,16 @@ function simDT_bootstrap_t(R::String, global_seed::Int64, GP::global_param, eq_i
 end
 
 
-
-# var(itr; corrected::Bool=true, mean=nothing[, dims]) If corrected is true, then the sum is scaled with n-1, whereas the sum is scaled with n if corrected is false where n is the number of elements in itr.
-function simDT_t(R::String, global_seed::Int64, GP::global_param, eq_input::eqbm_t, B::Int64, t::Int64, full::Bool; outputDT::Bool = false, folder_path::String = "")
-    """
-    estimation for a single t, including DGP
-    """
-
-    RS0 = [eq_input.eqbm_m_list[m].RS0_m for m in 1:GP.C+GP.M]
-    mean_RS0 = mean(RS0)
-    herfindahl_list = [eq_input.eqbm_m_list[m].herfindahl for m in 1:GP.C+GP.M]
-    herfindahl = sum(herfindahl_list)
-
-    DT = simDT_for_reg(eq_input, full) # one period data
-    if outputDT
-        filename = folder_path*"temp_Conduct$(R)_C$(GP.C)_N$(GP.N)_M$(GP.M)_t$(t).csv"
-        CSV.write(filename, DT)
-    end
-
-    σD_OLS = est_demand_OLS(DT)
-    σD_IV = est_demand_IV(DT)
-    σS_OLS = est_supply_OLS(DT)
-    σSB_GMM, seSB_GMM = est_supply_GMM_twostep(GP,μB_icm_R,μB_0mm_R,DT)
-    σSC_GMM, seSC_GMM = est_supply_GMM_twostep(GP,μC_icm_R,μC_0mm_R,DT)
-    σDSB_GMM, seDSB_GMM = est_supply_demand_GMM_twostep(GP,μB_icm_R,μB_0mm_R,DT)
-    σDSC_GMM, seDSC_GMM = est_supply_demand_GMM_twostep(GP,μC_icm_R,μC_0mm_R,DT)
-
-    
-    df = DataFrame(R=R, t=t, ΔDSB = σDSB_GMM[1] - σD_IV, ΔDSC = σDSC_GMM[1] - σD_IV,
-    σD_OLS = σD_OLS, σD_IV = σD_IV, σS_OLS = σS_OLS, 
-    σSB_GMM = σSB_GMM[1], σSC_GMM = σSC_GMM[1], σDSB_GMM = σDSB_GMM[1], σDSC_GMM = σDSC_GMM[1],
-    seSB_GMM = seSB_GMM[1],seSC_GMM = seSC_GMM[1], seDSB_GMM=seDSB_GMM[1], seDSC_GMM=seDSC_GMM[1],
-    herfindahl = herfindahl, mean_RS0 = mean_RS0)
-
-    return df
-end
-
-
-# function simDT_t_modified(R::String, global_seed::Int64, GP::global_param, eq_input::eqbm_t, B::Int64, t::Int64, full::Bool; outputDT::Bool = false, folder_path::String = "")
-#     """
-#     estimation for a single t, including DGP
-#     """
-
-#     RS0 = [eq_input.eqbm_m_list[m].RS0_m for m in 1:GP.C+GP.M]
-#     mean_RS0 = mean(RS0)
-#     herfindahl_list = [eq_input.eqbm_m_list[m].herfindahl for m in 1:GP.C+GP.M]
-#     herfindahl = sum(herfindahl_list)
-
-#     DT = simDT_for_reg(eq_input, full) # one period data
-#     if outputDT
-#         filename = folder_path*"temp_Conduct$(R)_C$(GP.C)_N$(GP.N)_M$(GP.M)_t$(t).csv"
-#         CSV.write(filename, DT)
-#     end
-
-#     σD_OLS = est_demand_OLS(DT)
-#     σD_IV = est_demand_IV(DT)
-#     σS_OLS = est_supply_OLS(DT)
-#     σSB_GMM, seSB_GMM = est_supply_GMM_twostep(GP,μB_icm_R,μB_0mm_R,DT)
-#     σSC_GMM, seSC_GMM = est_supply_GMM_twostep(GP,μC_icm_R,μC_0mm_R,DT)
-#     σDSB_GMM, seDSB_GMM = est_supply_demand_GMM_twostep_modified(GP,μB_icm_R,μB_0mm_R,DT)
-#     σDSC_GMM, seDSC_GMM = est_supply_demand_GMM_twostep_modified(GP,μC_icm_R,μC_0mm_R,DT)
-
-    
-#     df = DataFrame(R=R, t=t, ΔDSB = σDSB_GMM[1] - σD_IV, ΔDSC = σDSC_GMM[1] - σD_IV,
-#     σD_OLS = σD_OLS, σD_IV = σD_IV, σS_OLS = σS_OLS, 
-#     σSB_GMM = σSB_GMM[1], σSC_GMM = σSC_GMM[1], σDSB_GMM = σDSB_GMM[1], σDSC_GMM = σDSC_GMM[1],
-#     seSB_GMM = seSB_GMM[1],seSC_GMM = seSC_GMM[1], seDSB_GMM=seDSB_GMM[1], seDSC_GMM=seDSC_GMM[1],
-#     herfindahl = herfindahl, mean_RS0 = mean_RS0)
-
-#     return df
-# end
-
-
-
 function simDT_bootstrap_MC_safe(R::String, GP::global_param, eq_input::eqbm_output, B::Int64; full = false)
     """
     Monte-Carlo simulation, returns Hausman stats etc. Safe version. Deal with unexpected errors like "ArgumentError: matrix contains Infs or NaNs"
+        - R: "B" or "C"
         - GP: global parameters
-        - global_seed: two random seeds
-        - T: number of simulations
+        - eq_input: equilibrium object
         - B: number of bootstrap iterations
         - full: whether full versions of the estimates are needed
     Output:
-        - dfB: a dataframe of statistics for DGP based on Bertrand
-        - dfC: a dataframe of statistics for DGP based on Cournot
+        - df: a dataframe of estimates based on DGP
     """ 
 
     function try_bootstrap(t,R,B_seed)
@@ -354,41 +252,3 @@ function simDT_bootstrap_MC_safe(R::String, GP::global_param, eq_input::eqbm_out
 
     return df # only return successful results
 end
-
-
-
-# function simDT_MC_safe(R::String, GP::global_param, eq_input::eqbm_output, B::Int64; full = false)
-#     """
-#     Monte-Carlo simulation, safe version. Deal with unexpected errors like "ArgumentError: matrix contains Infs or NaNs"
-#         - GP: global parameters
-#         - global_seed: two random seeds
-#         - T: number of simulations
-#         - B: number of bootstrap iterations
-#         - full: whether full versions of the estimates are needed
-#     Output:
-#         - dfB: a dataframe of statistics for DGP based on Bertrand
-#         - dfC: a dataframe of statistics for DGP based on Cournot
-#     """ 
-
-#     function try_est(t, R)
-#         try
-#             return (idx=t, success=true, result = simDT_t(R, seed, GP, eqbm_t_list[t], B, t, full))
-#         catch e
-#             println("Error in estimation task $t: $e")
-#             return (idx=t, success=false, result=nothing)
-#         end
-#     end  
-#     eqbm_t_list = eq_input.eqbm_t_list
-#     T = length(eqbm_t_list)
-
-#     results = ThreadsX.map(t -> try_est(t, R), 1:T)
-#     # Filter successful and unsuccessful results
-#     successes = filter(r -> r.success, results)
-#     df = reduce(vcat, [r.result for r in successes], cols=:union)
-
-#     # # Add: remove rows with large variances
-#     # df = filter(row -> row.var_DSB < 1e3 && row.var_DSC < 1e3, df)
-
-#     return df # only return successful results
-# end
-

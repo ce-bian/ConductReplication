@@ -19,9 +19,8 @@ include("CES_extended_3rd_mkt_ad_valorem/main/C2N1_example2.jl")
 
 # Figure 9 
 include("CES_extended_3rd_mkt_ad_valorem/main/C2N2_example1.jl") 
-# modification: changed Y_m = 1.0 to be consistent with other figures 
 
-# Figure 10 (note that the text in draft is inconsistent -> corrected)
+# Figure 10
 include("CES_extended_3rd_mkt_ad_valorem/main/C4N4_example1.jl")
 
 

@@ -1,5 +1,5 @@
 using Parameters, Optim, ForwardDiff, LinearAlgebra, Distributions, Random
-using PrettyTables, DataFrames, NLsolve, NLSolversBase, RCall, ThreadsX, Revise
+using PrettyTables, DataFrames, NLsolve, NLSolversBase, ThreadsX, Revise
 using CSV, JLD2, Test, Plots, StatsPlots, LaTeXStrings
 
 includet("../../CES_structs.jl")
@@ -77,7 +77,7 @@ C_shr_text = "Cournot avg mkt shrs w/o S: " * string(round.(C_shr_list, digits=3
 B_shr_text = "Bertrand avg mkt shrs w/o S: " * string(round.(B_shr_list, digits=3))
 annotate!(p, [(-60, -2.2*100, text(C_shr_text, 7, color=:gray))])
 annotate!(p, [(-60, -2.5*100, text(B_shr_text, 7, color=:gray))])
-savefig(p, "Figures/C4N4_delta_Wbigger_example1.pdf")
+savefig(p, "Figures/Figure10a.pdf")
 
 
 
@@ -120,4 +120,4 @@ C_shr_text = "Cournot avg mkt shrs w/o S: " * string(round.(C_shr_list, digits=3
 B_shr_text = "Bertrand avg mkt shrs w/o S: " * string(round.(B_shr_list, digits=3))
 annotate!(p, [(-1.9, -1.1, text(C_shr_text, 7, color=:gray))])
 annotate!(p, [(-1.9, -1.2, text(B_shr_text, 7, color=:gray))])
-savefig(p, "Figures/C4N4_delta_Wsmaller_example1.pdf")
+savefig(p, "Figures/Figure10b.pdf")

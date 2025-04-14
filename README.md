@@ -24,7 +24,7 @@ or (2) open a terminal and navigate to the folder and run the following command:
 julia --project=/Users/cbian/Dropbox/MyProject -e 'using Pkg; Pkg.instantiate()'
 ```
 
-**_master.jl** is the main file that runs the entire project. It will run all the files in the order they are listed in the file. You can also run each file individually by running them in the Julia REPL or in a terminal.
+**_master.jl** is the main file that runs the entire project. It will replicate all tables and figures in the paper. It will take a few days to run (depending on your computer), so you can comment out the parts you don't need. You can also run each file individually by running them in the Julia REPL or in a terminal.
 
 Note that two files are not included in this repository (but will be in the journal replication package) due to size constraints (> 100MB), you can download them from the following links: 
 - Data/eqbaB_eqbaC_GP_C2_N1_M1000.jld2: the simulated equilibrium data for C=2 and N=1 

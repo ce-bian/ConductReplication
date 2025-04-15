@@ -5,8 +5,8 @@
 
 
 import Pkg
-# Pkg.add("Statistics")
 # Pkg.resolve()       # Resolves dependencies
+Pkg.activate(".")
 Pkg.instantiate() 
 
 # necessary packages ====

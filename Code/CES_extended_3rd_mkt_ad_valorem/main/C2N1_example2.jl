@@ -113,7 +113,6 @@ annotate!(p, [(5, -0.025*100, text("Cournot", :blue, 14, :left))])
 annotate!(p, [(14.0, -0.01*100, text(L"S (\%)", 10, :left))])
 annotate!(p, [(0.5, -0.15*100, text(L"$\frac{W- W_0}{W_0} \times 100\% $", 10, :left))]) 
 
-
 C_shr_list = [[eqC.RS_m; eqC.RS0_m]...] 
 B_shr_list = [[eqB.RS_m; eqB.RS0_m]...]
 C_shr_text = "Cournot mkt shrs w/o S: " * string(round.(C_shr_list, digits=3))

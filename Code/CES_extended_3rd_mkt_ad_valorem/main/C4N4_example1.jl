@@ -18,6 +18,7 @@ TOL = 1e-8 # tolerance level
 MAX_RETRIES = 300
 
 
+
 Y_m = 1.0
 exp_ξ_m = [1.0 1.0 1.0 1.0; 2.0 2.0 2.0 2.0; 1.0 1.0 1.0 1.0; 1.0 1.0 1.0 1.0]
 exp_ω_m = [1.0 1.0 1.0 1.0; 1.0 1.0 1.0 1.0; 1.0 1.0 1.0 1.0; 1.0 1.0 1.0 1.0]
@@ -78,8 +79,6 @@ B_shr_text = "Bertrand avg mkt shrs w/o S: " * string(round.(B_shr_list, digits=
 annotate!(p, [(-60, -2.2*100, text(C_shr_text, 7, color=:gray))])
 annotate!(p, [(-60, -2.5*100, text(B_shr_text, 7, color=:gray))])
 savefig(p, "Figures/Figure10a.pdf")
-
-
 
 
 C_S1_optimal =Cournot_optimal_s_m_c_f(IDT_m, 1)

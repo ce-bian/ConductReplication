@@ -6,10 +6,10 @@ include("install_packages.jl")
 
 
 # Figure 1
-include("CES_3rd_mkt_ad_valorem/main/CES_3rd_mkt_reaction_function_plots.jl")
+include("CES_3rd_mkt_ad_valorem/main/reaction_function_plots.jl")
 
 # Figure 2
-include("CES_3rd_mkt_ad_valorem/main/CES_3rd_mkt_example.jl")
+include("CES_3rd_mkt_ad_valorem/main/C2N1_example.jl")
 
 # Figure 3
 include("CES_extended_3rd_mkt_ad_valorem/main/C2N1_example1.jl")
@@ -35,7 +35,7 @@ include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/est_simDT_varyM_C2N1.jl")
 include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/policy_table_C2N1.jl")
 
 # Table 1
-include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/parameters_texout_C2N1.jl")
+include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/parameters_C2N1.jl")
 
 # Figure 5-7
 include("CES_extended_3rd_mkt_ad_valorem/w_simDT/main/output_C2N1.jl")

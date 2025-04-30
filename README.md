@@ -19,9 +19,9 @@ using Pkg
 Pkg.activate(".")
 Pkg.instantiate() 
 ```
-or (2) open a terminal and navigate to the folder and run the following command:
+or (2) open a terminal and navigate to the folder and run the following command (change the path first):
 ```bash
-julia --project=/Users/cbian/Dropbox/MyProject -e 'using Pkg; Pkg.instantiate()'
+julia --project=/Users/cbian/Dropbox/ConductReplication -e 'using Pkg; Pkg.instantiate()'
 ```
 
 **_master.jl** is the main file that runs the entire project. It will replicate all tables and figures in the paper. It will take a few days to run (depending on your computer), so you can comment out the parts you don't need. You can also run each file individually by running them in the Julia REPL or in a terminal.

@@ -91,7 +91,7 @@ p = scatter!([100*Q1_eq_s], [100*Q2_eq_s], color=:black)
 p = annotate!(65,90 , text(L"R_1(Q_2)", :left, color=:red))
 p = annotate!(5,30 , text(L"R_2(Q_1)", :left, color=:blue))
 p = annotate!(20,90 , text(L"R_1(Q_2, s_1< 0)", :left, color=:orange))
-savefig(p, "Figures/Figures1b.pdf")
+savefig(p, "Figures/Figure1b.pdf")
 
 
 
